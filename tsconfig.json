@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    //noEmit means tsc only type checks but doesnt transpile since babel transpiles for us.
+    "noEmit": true,
+    // these are options pertaining to how strict we want our error reporting 
+    "allowSyntheticDefaultImports": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "strict": true,
+    //these are I think irrelevant since we aren't emitting anything. but left here incase we wanted to switch.
+    "target": "ES5",
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "jsx": "react",
+    // fork-ts-checker-webpack-plugin does our type checking and uses typescript module resolution to do it. 
+    // these options pertain to typescript module resolution.
+    "baseUrl": "./src",
+    "moduleResolution": "Node",
+  },
+  "include": ["./src"],
+  "exclude": ["node_modules"]
+}
