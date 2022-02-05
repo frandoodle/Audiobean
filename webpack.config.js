@@ -40,7 +40,13 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
+            presets: [
+              ["@babel/preset-env", {
+                  "corejs": 3,
+                  "useBuiltIns": "usage"
+              }], 
+              '@babel/preset-react', 
+              '@babel/preset-typescript'],
             plugins: ['@babel/proposal-class-properties','@babel/proposal-object-rest-spread']
           }
         }
