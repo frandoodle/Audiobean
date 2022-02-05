@@ -7,6 +7,8 @@ type AppState = {
   playing: boolean;
   volume: number;
   speed: number;
+  cent: number;
+  semitone: number;
 }
 type AppProps = {
 } 
@@ -26,6 +28,8 @@ class App extends Component<AppProps, AppState>{
       playing: false,
       volume: 1,
       speed: 1,
+      cent: 0,
+      semitone: 0,
     };
     this.audioElementRef = React.createRef();
   }
@@ -76,6 +80,18 @@ class App extends Component<AppProps, AppState>{
     })
     this.source.playbackRate.value = Number(e.target.value);
   }
+  semitoneChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      semitone: Number(e.target.value)
+    })
+    this.source.detune.value = this.state.semitone + this.state.cent;
+  }
+  centChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      cent: Number(e.target.value)
+    })
+    this.source.detune.value = this.state.semitone + this.state.cent;
+  }
 
   async setupSample() {
       const response = await fetch(filepath);
@@ -95,6 +111,10 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="0" max="2" value={this.state.volume} step="0.01" onChange={this.volumeChangeHandler} />
         <label>{this.state.speed}</label>
         <input type="range" min="0" max="2" value={this.state.speed} step="0.01" onChange={this.speedChangeHandler} />
+        <label>{this.state.semitone}</label>
+        <input type="range" min="-9600" max="9600" value={this.state.semitone} step="100" onChange={this.semitoneChangeHandler} />
+        <label>{this.state.cent}</label>
+        <input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />
       </div>
     );
   }
