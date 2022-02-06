@@ -1,4 +1,4 @@
-import React, { Component} from "react";
+import React, {Component} from "react";
 import "./App.css";
 import filepath from "./dire.mp3";
 
@@ -15,11 +15,9 @@ type AppProps = {
 
 class App extends Component<AppProps, AppState>{
   audioContext: AudioContext;
-  audioElement: HTMLMediaElement | null;
-  audioElementRef: React.RefObject<HTMLMediaElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement>;
   source: AudioBufferSourceNode;
   gainNode: GainNode;
-  track: MediaElementAudioSourceNode;
 
   constructor(props: AppProps) {
     super(props);
@@ -31,7 +29,7 @@ class App extends Component<AppProps, AppState>{
       cent: 0,
       semitone: 0,
     };
-    this.audioElementRef = React.createRef();
+    this.canvasRef = React.createRef();
   }
 
   componentDidMount(){
@@ -44,7 +42,31 @@ class App extends Component<AppProps, AppState>{
         this.gainNode = this.audioContext.createGain();
         this.source.connect(this.gainNode).connect(this.audioContext.destination);
         this.source.loop = true;
+        const canvas = this.canvasRef.current;
+        if(canvas){
+          this.drawBuffer(canvas.width, canvas.height, canvas.getContext('2d'), audioBuffer);
+        }
   });
+  }
+
+  drawBuffer(width:number, height:number, context:CanvasRenderingContext2D | null, buffer:AudioBuffer) {
+    if(context){
+      var data = buffer.getChannelData( 0 );
+      var step = Math.ceil( data.length / width );
+      var amp = height / 2;
+      for(var i=0; i < width; i++){
+          var min = 1.0;
+          var max = -1.0;
+          for (var j=0; j<step; j++) {
+              var datum = data[(i*step)+j]; 
+              if (datum < min)
+                  min = datum;
+              if (datum > max)
+                  max = datum;
+          }
+          context.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
+      }
+    }
   }
 
   playClickHandler = (e: React.SyntheticEvent) => {
@@ -115,6 +137,7 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="-9600" max="9600" value={this.state.semitone} step="100" onChange={this.semitoneChangeHandler} />
         <label>{this.state.cent}</label>
         <input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />
+        <canvas ref={this.canvasRef} width="1536" height="200"></canvas>
       </div>
     );
   }
