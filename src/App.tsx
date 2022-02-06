@@ -1,10 +1,12 @@
 import React, {Component} from "react";
 import "./App.css";
+import Waveform from "./Waveform"
 import filepath from "./dire.mp3";
 
 type AppState = {
   started: boolean;
   playing: boolean;
+  progress: number;
   volume: number;
   speed: number;
   cent: number;
@@ -24,6 +26,7 @@ class App extends Component<AppProps, AppState>{
     this.state = {
       started: false, 
       playing: false,
+      progress: 0,
       volume: 1,
       speed: 1,
       cent: 0,
@@ -42,31 +45,9 @@ class App extends Component<AppProps, AppState>{
         this.gainNode = this.audioContext.createGain();
         this.source.connect(this.gainNode).connect(this.audioContext.destination);
         this.source.loop = true;
-        const canvas = this.canvasRef.current;
-        if(canvas){
-          this.drawBuffer(canvas.width, canvas.height, canvas.getContext('2d'), audioBuffer);
-        }
-  });
-  }
-
-  drawBuffer(width:number, height:number, context:CanvasRenderingContext2D | null, buffer:AudioBuffer) {
-    if(context){
-      var data = buffer.getChannelData( 0 );
-      var step = Math.ceil( data.length / width );
-      var amp = height / 2;
-      for(var i=0; i < width; i++){
-          var min = 1.0;
-          var max = -1.0;
-          for (var j=0; j<step; j++) {
-              var datum = data[(i*step)+j]; 
-              if (datum < min)
-                  min = datum;
-              if (datum > max)
-                  max = datum;
-          }
-          context.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
-      }
-    }
+        this.updateProgress();
+        this.forceUpdate();
+      });
   }
 
   playClickHandler = (e: React.SyntheticEvent) => {
@@ -115,6 +96,18 @@ class App extends Component<AppProps, AppState>{
     this.source.detune.value = this.state.semitone + this.state.cent;
   }
 
+  updateProgress() {
+    var audioTimestamp = this.audioContext.getOutputTimestamp();
+    var newProgress = audioTimestamp.contextTime;
+    if(newProgress !== this.state.progress){
+      this.setState({
+        progress: newProgress ? newProgress : 0
+      })
+    }
+    console.log("animation");
+    requestAnimationFrame(this.updateProgress.bind(this));
+  }
+
   async setupSample() {
       const response = await fetch(filepath);
       const arrayBuffer = await response.arrayBuffer();
@@ -123,9 +116,14 @@ class App extends Component<AppProps, AppState>{
   }
 
   render(){
+    if(this.audioContext){
+      // var audioTimestamp = this.audioContext.getOutputTimestamp();
+      // var newProgress = audioTimestamp.contextTime;
+      var newProgress = this.audioContext.currentTime;
+    }
+
     return(
       <div className="App">
-        {/*<audio src={dire} ref={this.audioElementRef}></audio>*/}
         <button onClick={this.playClickHandler}>
           <span>Play/Pause</span>
         </button>
@@ -137,7 +135,9 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="-9600" max="9600" value={this.state.semitone} step="100" onChange={this.semitoneChangeHandler} />
         <label>{this.state.cent}</label>
         <input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />
-        <canvas ref={this.canvasRef} width="1536" height="200"></canvas>
+        {this.source && this.source.buffer ?
+          <Waveform audioBuffer={this.source.buffer} audioContext={this.audioContext} progress={this.state.progress}/> :
+          <span>"Loading"</span>}
       </div>
     );
   }
