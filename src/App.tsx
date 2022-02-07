@@ -8,6 +8,7 @@ type AppState = {
   started: boolean;
   playing: boolean;
   granular: boolean;
+  lastTime: number;
   progress: number;
   volume: number;
   speed: number;
@@ -28,6 +29,7 @@ class App extends Component<AppProps, AppState>{
       started: false, 
       playing: false,
       granular: false,
+      lastTime: 0,
       progress: 0,
       volume: 1,
       speed: 1,
@@ -44,6 +46,13 @@ class App extends Component<AppProps, AppState>{
       this.player.sync().start(0);
       Tone.Transport.setLoopPoints(0,this.player.buffer.duration);
       Tone.Transport.loop = true;
+      Tone.Transport.on('loop', () => {
+        Tone.Transport.loopEnd = this.player.buffer.duration / this.state.speed
+        this.setState({
+          progress: 0,
+          lastTime: 0
+        })
+      })
     });
     this.grainPlayer = new Tone.GrainPlayer(filepath, () => {
       this.grainPlayer.sync().start(0);
@@ -52,15 +61,18 @@ class App extends Component<AppProps, AppState>{
     });
   }
 
-  playClickHandler = (e: React.SyntheticEvent) => {
+  playClickHandler = async (e: React.SyntheticEvent) => {
     if(this.state.started === false){
+      await Tone.loaded()
       var ctx = Tone.getContext();
       if(ctx){
         ctx.resume();
+        this.updateProgress();
         this.setState({
         started: true
         })
       }
+      
     }
     if(this.state.playing === false){
       Tone.Transport.start();
@@ -73,6 +85,10 @@ class App extends Component<AppProps, AppState>{
         playing: false
       })
     }
+  }
+
+  resetClickHandler = (e: React.SyntheticEvent) => {
+    Tone.Transport.seconds = 20;
   }
 
   // volumeChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +106,7 @@ class App extends Component<AppProps, AppState>{
     this.player.playbackRate = newSpeed;
     this.grainPlayer.playbackRate = newSpeed;
     this.pitchShift.pitch = -Math.log2(newSpeed)*12 + this.state.semitone; //maintain the original pitch after changing the playback speed.
+    Tone.Transport.loopEnd = Tone.Transport.seconds + (this.player.buffer.duration - this.state.progress) / newSpeed;
   }
   semitoneChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     var newSemitone = Number(e.target.value);
@@ -113,17 +130,17 @@ class App extends Component<AppProps, AppState>{
     this.grainPlayer.mute=!newGranular;
     this.player.mute=newGranular;
   }
-  // updateProgress() {
-  //   var audioTimestamp = this.audioContext.getOutputTimestamp();
-  //   var newProgress = audioTimestamp.contextTime;
-  //   if(newProgress !== this.state.progress){
-  //     this.setState({
-  //       progress: newProgress ? newProgress : 0
-  //     })
-  //   }
-  //   console.log("animation");
-  //   requestAnimationFrame(this.updateProgress.bind(this));
-  // }
+  updateProgress() {
+    var newProgress = Tone.Transport.seconds;
+    if(newProgress !== this.state.lastTime){
+      var adjustedProgress = this.state.progress + (newProgress - this.state.lastTime)*this.state.speed;
+      this.setState({
+        progress: adjustedProgress,
+        lastTime: newProgress
+      })
+    }
+    requestAnimationFrame(this.updateProgress.bind(this));
+  }
 
   render(){
     // if(this.audioContext){
@@ -137,6 +154,9 @@ class App extends Component<AppProps, AppState>{
         <button onClick={this.playClickHandler}>
           <span>Play/Pause</span>
         </button>
+        <button onClick={this.resetClickHandler}>
+          <span>Reset to ? seconds</span>
+        </button>
         <label>{this.state.granular ? "granular" : "audio"}</label>
         <input type="checkbox" checked={this.state.granular} onChange={this.playbackChangeHandler} />
         {/*<label>{this.state.volume}</label>
@@ -145,11 +165,15 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="0" max="8" value={this.state.speed} step="0.01" onChange={this.speedChangeHandler} />
         <label>{this.state.semitone}</label>
         <input type="range" min="-12" max="12" value={this.state.semitone} step="1" onChange={this.semitoneChangeHandler} />
-        {/*<label>{this.state.cent}</label>
-        <input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />
-        {this.source && this.source.buffer ?
-          <Waveform audioBuffer={this.source.buffer} audioContext={this.audioContext} progress={this.state.progress}/> :
-          <span>"Loading"</span>}*/}
+        {/*<label>{this.state.cent}</label>*/}
+        {/*<input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />*/}
+        {this.player && this.player.buffer ?
+          <Waveform audioBuffer={this.player.buffer}progress={this.state.progress} duration={this.player.buffer.duration}/> :
+          <span>"Loading"</span>}
+        <div>{this.player ? this.player.buffer.duration: 0}</div>
+        <div>{Tone.Transport.loopEnd}</div>
+        <div>{this.state.progress}</div>
+        <div>{Tone.Transport.seconds}</div>
       </div>
     );
   }

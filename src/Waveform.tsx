@@ -9,6 +9,7 @@ type WaveformState = {
 type WaveformProps = {
   audioBuffer: Tone.ToneAudioBuffer;
   progress: number;
+  duration: number;
 } 
 
 class Waveform extends Component<WaveformProps, WaveformState>{
@@ -64,7 +65,8 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       // this.setState({
       //   cursor: this.props.progress,
       // })
-      var x = (this.props.progress - canvas.getBoundingClientRect().left);
+      var ratio = canvas.width / this.props.duration;
+      var x = (this.props.progress*ratio - canvas.getBoundingClientRect().left);
       var y = 0;
       var w = 1;
       var h = canvas.height;
@@ -76,21 +78,21 @@ class Waveform extends Component<WaveformProps, WaveformState>{
     }
   }
   hoverWaveform = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = this.positionCanvasRef.current;
-    if(canvas){
-      this.setState({
-        cursor: (e.clientX - canvas.getBoundingClientRect().left),
-      })
-      var x = (e.clientX - canvas.getBoundingClientRect().left);
-      var y = 0;
-      var w = 1;
-      var h = canvas.height;
-      const ctx = canvas.getContext('2d');
-      if(ctx){
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillRect(x, y, w, h);
-      }
-    }
+    // const canvas = this.positionCanvasRef.current;
+    // if(canvas){
+    //   this.setState({
+    //     cursor: (e.clientX - canvas.getBoundingClientRect().left),
+    //   })
+    //   var x = (e.clientX - canvas.getBoundingClientRect().left);
+    //   var y = 0;
+    //   var w = 1;
+    //   var h = canvas.height;
+    //   const ctx = canvas.getContext('2d');
+    //   if(ctx){
+    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //     ctx.fillRect(x, y, w, h);
+    //   }
+    // }
   }
 
   render(){
@@ -102,9 +104,9 @@ class Waveform extends Component<WaveformProps, WaveformState>{
           <canvas ref={this.positionCanvasRef}
           width="1536" height="200" style={{position: 'absolute', left: 0, top: 0, zIndex: 0,}}></canvas>
         </div>
-        <div>
+        {/*<div>
           {this.state.cursor}
-        </div>
+        </div>*/}
       </div>
     );
   }
