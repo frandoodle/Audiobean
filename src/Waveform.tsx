@@ -1,4 +1,5 @@
 import React, {Component} from "react";
+import * as Tone from "tone";
 import "./Waveform.css";
 import filepath from "./dire.mp3";
 
@@ -6,8 +7,7 @@ type WaveformState = {
   cursor: Number;
 }
 type WaveformProps = {
-  audioContext: AudioContext;
-  audioBuffer: AudioBuffer;
+  audioBuffer: Tone.ToneAudioBuffer;
   progress: number;
 } 
 
@@ -38,7 +38,7 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       this.drawPosition();
     }
   }
-  drawBuffer(width:number, height:number, context:CanvasRenderingContext2D | null, buffer:AudioBuffer) {
+  drawBuffer(width:number, height:number, context:CanvasRenderingContext2D | null, buffer:Tone.ToneAudioBuffer) {
   if(context){
     var data = buffer.getChannelData( 0 );
     var step = Math.ceil( data.length / width ); //step size is how many data items compress to a singel pixel 
