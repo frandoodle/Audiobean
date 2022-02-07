@@ -141,13 +141,17 @@ class App extends Component<AppProps, AppState>{
     }
     requestAnimationFrame(this.updateProgress.bind(this));
   }
+  seek = (position: number) => {
+    var transportPosition = position / this.state.speed;
+    Tone.Transport.seconds = transportPosition;
+    Tone.Transport.loopEnd = this.player.buffer.duration / this.state.speed;
+    this.setState({
+      progress: position,
+      lastTime: transportPosition,
+    })
+  }
 
   render(){
-    // if(this.audioContext){
-    //   // var audioTimestamp = this.audioContext.getOutputTimestamp();
-    //   // var newProgress = audioTimestamp.contextTime;
-    //   var newProgress = this.audioContext.currentTime;
-    // }
 
     return(
       <div className="App">
@@ -168,12 +172,15 @@ class App extends Component<AppProps, AppState>{
         {/*<label>{this.state.cent}</label>*/}
         {/*<input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />*/}
         {this.player && this.player.buffer ?
-          <Waveform audioBuffer={this.player.buffer}progress={this.state.progress} duration={this.player.buffer.duration}/> :
+          <Waveform audioBuffer={this.player.buffer}
+                    progress={this.state.progress}
+                    duration={this.player.buffer.duration}
+                    onSeek={this.seek}/> :
           <span>"Loading"</span>}
-        <div>{this.player ? this.player.buffer.duration: 0}</div>
+        {/*<div>{this.player ? this.player.buffer.duration: 0}</div>
         <div>{Tone.Transport.loopEnd}</div>
         <div>{this.state.progress}</div>
-        <div>{Tone.Transport.seconds}</div>
+        <div>{Tone.Transport.seconds}</div>*/}
       </div>
     );
   }
