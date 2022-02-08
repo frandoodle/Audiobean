@@ -6,6 +6,8 @@ import filepath from "./dire.mp3";
 type WaveformState = {
   hovering: boolean;
   hover: number;
+  windowPosition: number;
+  zoom: number;
 }
 type WaveformProps = {
   audioBuffer: Tone.ToneAudioBuffer;
@@ -21,35 +23,62 @@ class Waveform extends Component<WaveformProps, WaveformState>{
 
   constructor(props: WaveformProps) {
     super(props);
+    // var bufferCenter = Math.ceil(this.props.audioBuffer.getChannelData( 0 ).length/2);
     this.state = {
       hover: 0,
       hovering: false,
+      zoom: 1,
+      windowPosition: this.props.duration/2,
     }
     this.waveformCanvasRef = React.createRef();
     this.positionCanvasRef = React.createRef();
   }
 
   componentDidMount(){
+    this.drawBuffer();
     const canvas = this.waveformCanvasRef.current;
     if(canvas){
-      this.drawBuffer(canvas.width, canvas.height, canvas.getContext('2d'), this.props.audioBuffer);
+      canvas.addEventListener('wheel', this.handleScroll, {passive: false});
+    }
+  }
+  componentWillUnmount(){
+    const canvas = this.waveformCanvasRef.current;
+    if(canvas){
+      canvas.removeEventListener('wheel', this.handleScroll);
     }
   }
   componentDidUpdate(prevProps: WaveformProps){
     if(prevProps.progress !== this.props.progress){
-      this.clear();
-      this.drawPosition(this.props.progress, this.props.duration);
-      if(this.state.hovering){
-        this.drawPosition(this.state.hover);
+      var windowSize = this.props.duration/this.state.zoom;
+      var leftWindowPosition = this.state.windowPosition - windowSize/2;
+      var rightWindowPosition = this.state.windowPosition + windowSize/2;
+      if(leftWindowPosition < this.props.progress && this.props.progress < rightWindowPosition){
+        this.clear();
+        this.drawPosition(this.props.progress - leftWindowPosition, windowSize);
+        if(this.state.hovering){
+          this.drawPosition(this.state.hover);
+        }
       }
     }
   }
-  drawBuffer(width:number, height:number, context:CanvasRenderingContext2D | null, buffer:Tone.ToneAudioBuffer) {
-    if(context){
-      var data = buffer.getChannelData( 0 );
-      var step = Math.ceil( data.length / width ); //step size is how many data items compress to a singel pixel 
-      var amp = height / 2;
-      for(var i=0; i < width; i++){ // for every pixel
+  drawBuffer() {
+    const canvas = this.waveformCanvasRef.current;
+    if(canvas){
+      var width = canvas.width;
+      var height = canvas.height;
+      var context = canvas.getContext('2d');
+      var buffer = this.props.audioBuffer;
+      if(context){
+        context.clearRect(0, 0, width, height);
+        var dataRaw = buffer.getChannelData( 0 );
+        var windowPositionSample = (dataRaw.length/this.props.duration)*this.state.windowPosition;
+        var sampleWindowSize = dataRaw.length/this.state.zoom;
+        var leftSample = Math.floor(windowPositionSample - sampleWindowSize/2);
+        var rightSample = Math.ceil(windowPositionSample + sampleWindowSize/2);
+        var data = dataRaw.slice(leftSample, rightSample)
+        var step = Math.ceil( data.length / width ); //step size is how many data items compress to a singel pixel 
+        var amp = height / 2;
+        for(var i=0; i < width; i++){ // for every pixel
           var min = 1.0;
           var max = -1.0;
           for (var j=0; j<step; j++) { //find min and max within step size
@@ -62,8 +91,17 @@ class Waveform extends Component<WaveformProps, WaveformState>{
           // void ctx.fillRect(x, y, width, height);
           context.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
         }
+        var increments = 20;
+        var windowSize = this.props.duration/this.state.zoom;
+        var step = windowSize/increments;
+        var offset = this.state.windowPosition - windowSize/2;
+        for(var i=0; i < increments; i++){
+          context.fillText(`${Math.floor(offset + step*i)}`, Math.ceil(i*width/increments), 10)
+        }
+        context.fillText(`${Math.floor(windowSize+offset)}`, width-20, 10)
       }
     }
+  }
   drawPosition(position: number, ratio?: number){
     const canvas = this.positionCanvasRef.current;
     if(canvas){
@@ -90,10 +128,55 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       }
     }
   }
+  handleScroll = (e: WheelEvent) => {
+    e.preventDefault();
+    //check max zoom
+    var zoomScale = 50
+    var newZoom = this.state.zoom - e.deltaY/50;
+    if(newZoom < 1) newZoom = 1;
+    if(newZoom > 100) newZoom = 100; 
+    if(newZoom !== this.state.zoom){
+      const canvas = this.positionCanvasRef.current;
+      if(canvas){
+        //get position of zoom in buffer
+        var windowSize = this.props.duration/this.state.zoom;
+        var normalizedScrollPosition = this.state.hover/canvas.width;
+        var scrollPositionInBuffer = (this.state.windowPosition - windowSize/2) + normalizedScrollPosition*windowSize;
+        //get new windowPosition
+        var normalizedDistanceToCenter = 0.5 - normalizedScrollPosition;
+        var newWindowSize = this.props.duration/newZoom;
+        var newWindowPosition = scrollPositionInBuffer + normalizedDistanceToCenter*newWindowSize;
+        //check we have not run out of buffer on either side
+        var leftWindowPosition = newWindowPosition - newWindowSize/2;
+        var rightWindowPosition = newWindowPosition + newWindowSize/2;
+        if(leftWindowPosition < 0){
+          newWindowPosition -= leftWindowPosition; 
+        } else if(this.props.duration < rightWindowPosition){
+          newWindowPosition -= rightWindowPosition - this.props.duration;
+        }
+        this.setState({
+          windowPosition: newWindowPosition,
+          zoom: newZoom,
+
+        }, this.drawBuffer)
+        if(leftWindowPosition > this.props.progress || this.props.progress > rightWindowPosition){
+          this.clear();
+          if(this.state.hovering){
+            this.drawPosition(this.state.hover);
+        }
+      }
+      }
+    }
+  }
   waveformHover = (e: React.MouseEvent<HTMLCanvasElement>) => {
     this.clear();
     this.drawPosition(e.clientX);
-    this.drawPosition(this.props.progress, this.props.duration);
+    var windowSize = this.props.duration/this.state.zoom;
+    var leftWindowPosition = this.state.windowPosition - windowSize/2;
+    var rightWindowPosition = this.state.windowPosition + windowSize/2;
+    if(leftWindowPosition < this.props.progress && this.props.progress < rightWindowPosition){
+      this.drawPosition(this.props.progress, this.props.duration);
+    }
     this.setState({
       hover: e.clientX,
       hovering: true,
@@ -101,7 +184,12 @@ class Waveform extends Component<WaveformProps, WaveformState>{
   }
   waveformExit = (e: React.MouseEvent<HTMLCanvasElement>) => {    
     this.clear();
-    this.drawPosition(this.props.progress, this.props.duration);
+    var windowSize = this.props.duration/this.state.zoom;
+    var leftWindowPosition = this.state.windowPosition - windowSize/2;
+    var rightWindowPosition = this.state.windowPosition + windowSize/2;
+    if(leftWindowPosition < this.props.progress && this.props.progress < rightWindowPosition){
+      this.drawPosition(this.props.progress, this.props.duration);
+    }
     this.setState({
       hover: 0,
       hovering: true,
@@ -110,8 +198,10 @@ class Waveform extends Component<WaveformProps, WaveformState>{
   waveformClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = this.positionCanvasRef.current;
     if(canvas){
-      var scale = this.props.duration/canvas.width;
-      var position = e.clientX*scale;
+      var normalizedPosition = e.clientX/canvas.width;
+      var windowSize = this.props.duration/this.state.zoom;
+      var leftWindowPosition = this.state.windowPosition - windowSize/2;
+      var position = normalizedPosition*windowSize + leftWindowPosition;
       this.props.onSeek(position);
       }
   }
