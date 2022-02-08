@@ -119,7 +119,7 @@ class Waveform extends Component<WaveformProps, WaveformState>{
   render(){
     return(
       <div className="Waveform">
-        <div style={{position: 'relative'}}>
+        <div style={{position: 'relative', height: "200px"}}>
           <canvas onMouseMove={this.waveformHover} onMouseLeave={this.waveformExit} onClick={this.waveformClick} ref={this.waveformCanvasRef}
           width="1536" height="200" style={{position: 'absolute', left: 0, top: 0, zIndex: 1,}}></canvas>
           <canvas ref={this.positionCanvasRef}

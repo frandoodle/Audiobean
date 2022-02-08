@@ -10,6 +10,9 @@ type AppState = {
   granular: boolean;
   lastTime: number;
   progress: number;
+  maxDuration: number;
+  loopStart: number;
+  loopEnd: number;
   volume: number;
   speed: number;
   cent: number;
@@ -31,6 +34,9 @@ class App extends Component<AppProps, AppState>{
       granular: false,
       lastTime: 0,
       progress: 0,
+      maxDuration: 0,
+      loopStart: 0,
+      loopEnd: 0,
       volume: 1,
       speed: 1,
       cent: 0,
@@ -44,10 +50,12 @@ class App extends Component<AppProps, AppState>{
       this.pitchShift = new Tone.PitchShift().toDestination();
       this.player.connect(this.pitchShift);
       this.player.sync().start(0);
+      this.setState({maxDuration: this.player.buffer.duration, loopEnd: this.player.buffer.duration})
       Tone.Transport.setLoopPoints(0,this.player.buffer.duration);
       Tone.Transport.loop = true;
       Tone.Transport.on('loop', () => {
-        Tone.Transport.loopEnd = this.player.buffer.duration / this.state.speed
+        Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
+        Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
         this.setState({
           progress: 0,
           lastTime: 0
@@ -106,7 +114,8 @@ class App extends Component<AppProps, AppState>{
     this.player.playbackRate = newSpeed;
     this.grainPlayer.playbackRate = newSpeed;
     this.pitchShift.pitch = -Math.log2(newSpeed)*12 + this.state.semitone; //maintain the original pitch after changing the playback speed.
-    Tone.Transport.loopEnd = Tone.Transport.seconds + (this.player.buffer.duration - this.state.progress) / newSpeed;
+    Tone.Transport.loopEnd = Tone.Transport.seconds + (this.state.loopEnd - this.state.progress) / newSpeed;
+    Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
   }
   semitoneChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     var newSemitone = Number(e.target.value);
@@ -130,6 +139,20 @@ class App extends Component<AppProps, AppState>{
     this.grainPlayer.mute=!newGranular;
     this.player.mute=newGranular;
   }
+  loopStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    var newLoopStart = Number(e.target.value);
+    this.setState({
+      loopStart: newLoopStart
+    })
+    Tone.Transport.loopStart = newLoopStart / this.state.speed;
+  }
+  loopEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    var newLoopEnd = Number(e.target.value);
+    this.setState({
+      loopEnd: newLoopEnd
+    })
+    Tone.Transport.loopEnd = Tone.Transport.seconds + (newLoopEnd - this.state.progress) / this.state.speed;
+  }
   updateProgress() {
     var newProgress = Tone.Transport.seconds;
     if(newProgress !== this.state.lastTime){
@@ -144,7 +167,7 @@ class App extends Component<AppProps, AppState>{
   seek = (position: number) => {
     var transportPosition = position / this.state.speed;
     Tone.Transport.seconds = transportPosition;
-    Tone.Transport.loopEnd = this.player.buffer.duration / this.state.speed;
+    Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
     this.setState({
       progress: position,
       lastTime: transportPosition,
@@ -171,13 +194,19 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="-12" max="12" value={this.state.semitone} step="1" onChange={this.semitoneChangeHandler} />
         {/*<label>{this.state.cent}</label>*/}
         {/*<input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />*/}
+        <span></span>
         {this.player && this.player.buffer ?
           <Waveform audioBuffer={this.player.buffer}
                     progress={this.state.progress}
-                    duration={this.player.buffer.duration}
+                    duration={this.state.maxDuration}
                     onSeek={this.seek}/> :
           <span>"Loading"</span>}
-        {/*<div>{this.player ? this.player.buffer.duration: 0}</div>
+        <label>{`${this.state.loopStart} - ${this.state.loopEnd}`}</label>
+        <div>
+        <input type="range" min="0" max={this.state.maxDuration} value={this.state.loopStart} step="1" onChange={this.loopStartChange} />
+        <input type="range" min="0" max={this.state.maxDuration} value={this.state.loopEnd} step="1" onChange={this.loopEndChange} />
+        </div>
+        {/*<div>{this.player ? this.state.maxDuration: 0}</div>
         <div>{Tone.Transport.loopEnd}</div>
         <div>{this.state.progress}</div>
         <div>{Tone.Transport.seconds}</div>*/}
