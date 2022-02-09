@@ -14,6 +14,10 @@ type WaveformProps = {
   progress: number;
   duration: number;
   onSeek: Function;
+  loopStart: number;
+  loopEnd: number;
+  loopStartChange: React.ChangeEventHandler<HTMLInputElement>;
+  loopEndChange: React.ChangeEventHandler<HTMLInputElement>;
 } 
 
 class Waveform extends Component<WaveformProps, WaveformState>{
@@ -94,11 +98,19 @@ class Waveform extends Component<WaveformProps, WaveformState>{
         var increments = 20;
         var windowSize = this.props.duration/this.state.zoom;
         var step = windowSize/increments;
-        var offset = this.state.windowPosition - windowSize/2;
-        for(var i=0; i < increments; i++){
-          context.fillText(`${Math.floor(offset + step*i)}`, Math.ceil(i*width/increments), 10)
+        var decimal = 1;
+        if(step < 2){
+          decimal = decimal*10;
         }
-        context.fillText(`${Math.floor(windowSize+offset)}`, width-20, 10)
+        if(step < 1){
+          decimal = decimal*10;
+        }
+        var offset = this.state.windowPosition - windowSize/2;
+        if(windowSize)
+        for(var i=0; i <= increments; i++){
+          var num = Math.round((offset + step*i + Number.EPSILON) * decimal) / decimal;
+          context.fillText(`${num}`, i*(width-30)/increments, 10);
+        }
       }
     }
   }
@@ -207,17 +219,21 @@ class Waveform extends Component<WaveformProps, WaveformState>{
   }
 
   render(){
+    var windowSize = this.props.duration/this.state.zoom;
+    var leftWindowPosition = this.state.windowPosition - windowSize/2;
+    var rightWindowPosition = this.state.windowPosition + windowSize/2;
     return(
       <div className="Waveform">
+        <div>
+          <input type="range" min={leftWindowPosition} max={rightWindowPosition} value={this.props.loopStart} step="0.01" onChange={this.props.loopStartChange} />
+          <input type="range" min={leftWindowPosition} max={rightWindowPosition} value={this.props.loopEnd} step="0.01" onChange={this.props.loopEndChange} />
+        </div>
         <div style={{position: 'relative', height: "200px"}}>
           <canvas onMouseMove={this.waveformHover} onMouseLeave={this.waveformExit} onClick={this.waveformClick} ref={this.waveformCanvasRef}
           width="1536" height="200" style={{position: 'absolute', left: 0, top: 0, zIndex: 1,}}></canvas>
           <canvas ref={this.positionCanvasRef}
           width="1536" height="200" style={{position: 'absolute', left: 0, top: 0, zIndex: 0,}}></canvas>
         </div>
-        {/*<div>
-          {this.state.cursor}
-        </div>*/}
       </div>
     );
   }

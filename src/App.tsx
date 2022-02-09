@@ -56,6 +56,7 @@ class App extends Component<AppProps, AppState>{
       Tone.Transport.on('loop', () => {
         Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
         Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
+        this.player.restart(Tone.immediate(),Tone.Transport.seconds*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
         this.setState({
           progress: 0,
           lastTime: 0
@@ -122,7 +123,7 @@ class App extends Component<AppProps, AppState>{
     this.setState({
       semitone: newSemitone
     })
-    this.grainPlayer.detune = newSemitone*100 + -Math.log2(this.state.speed)*1200;
+    this.grainPlayer.detune = newSemitone*100;
     this.pitchShift.pitch = newSemitone + -Math.log2(this.state.speed)*12;
   }
   // centChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,17 +142,21 @@ class App extends Component<AppProps, AppState>{
   }
   loopStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     var newLoopStart = Number(e.target.value);
-    this.setState({
-      loopStart: newLoopStart
-    })
-    Tone.Transport.loopStart = newLoopStart / this.state.speed;
+    if(newLoopStart < this.state.loopEnd){
+      this.setState({
+        loopStart: newLoopStart
+      })
+      Tone.Transport.loopStart = newLoopStart / this.state.speed;
+    }
   }
   loopEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     var newLoopEnd = Number(e.target.value);
-    this.setState({
-      loopEnd: newLoopEnd
-    })
-    Tone.Transport.loopEnd = Tone.Transport.seconds + (newLoopEnd - this.state.progress) / this.state.speed;
+    if(this.state.loopStart < newLoopEnd){
+      this.setState({
+        loopEnd: newLoopEnd
+      })
+      Tone.Transport.loopEnd = Tone.Transport.seconds + (newLoopEnd - this.state.progress) / this.state.speed;
+    }
   }
   updateProgress() {
     var newProgress = Tone.Transport.seconds;
@@ -167,6 +172,7 @@ class App extends Component<AppProps, AppState>{
   seek = (position: number) => {
     var transportPosition = position / this.state.speed;
     Tone.Transport.seconds = transportPosition;
+    this.player.restart(Tone.immediate(),transportPosition*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
     Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
     this.setState({
       progress: position,
@@ -199,13 +205,12 @@ class App extends Component<AppProps, AppState>{
           <Waveform audioBuffer={this.player.buffer}
                     progress={this.state.progress}
                     duration={this.state.maxDuration}
-                    onSeek={this.seek}/> :
+                    onSeek={this.seek}
+                    loopStart={this.state.loopStart}
+                    loopStartChange={this.loopStartChange}
+                    loopEnd={this.state.loopEnd}
+                    loopEndChange={this.loopEndChange}/> :
           <span>"Loading"</span>}
-        <label>{`${this.state.loopStart} - ${this.state.loopEnd}`}</label>
-        <div>
-        <input type="range" min="0" max={this.state.maxDuration} value={this.state.loopStart} step="1" onChange={this.loopStartChange} />
-        <input type="range" min="0" max={this.state.maxDuration} value={this.state.loopEnd} step="1" onChange={this.loopEndChange} />
-        </div>
         {/*<div>{this.player ? this.state.maxDuration: 0}</div>
         <div>{Tone.Transport.loopEnd}</div>
         <div>{this.state.progress}</div>
