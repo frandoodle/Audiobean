@@ -15,7 +15,6 @@ type AppState = {
   loopEnd: number;
   volume: number;
   speed: number;
-  cent: number;
   semitone: number;
 }
 type AppProps = {
@@ -39,7 +38,6 @@ class App extends Component<AppProps, AppState>{
       loopEnd: 0,
       volume: 1,
       speed: 1,
-      cent: 0,
       semitone: 0,
     };
   }
@@ -84,6 +82,7 @@ class App extends Component<AppProps, AppState>{
       
     }
     if(this.state.playing === false){
+      this.player.restart(Tone.immediate(),Tone.Transport.seconds*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
       Tone.Transport.start();
       this.setState({
         playing: true
@@ -94,10 +93,6 @@ class App extends Component<AppProps, AppState>{
         playing: false
       })
     }
-  }
-
-  resetClickHandler = (e: React.SyntheticEvent) => {
-    Tone.Transport.seconds = 20;
   }
 
   // volumeChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,12 +121,6 @@ class App extends Component<AppProps, AppState>{
     this.grainPlayer.detune = newSemitone*100;
     this.pitchShift.pitch = newSemitone + -Math.log2(this.state.speed)*12;
   }
-  // centChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   this.setState({
-  //     cent: Number(e.target.value)
-  //   })
-  //   this.source.detune.value = this.state.semitone + this.state.cent;
-  // }
   playbackChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     var newGranular = e.target.checked;
     this.setState({
@@ -140,18 +129,19 @@ class App extends Component<AppProps, AppState>{
     this.grainPlayer.mute=!newGranular;
     this.player.mute=newGranular;
   }
-  loopStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    var newLoopStart = Number(e.target.value);
-    if(newLoopStart < this.state.loopEnd){
+  loopStartChange = (value:number) => {
+    var newLoopStart = value;
+    if(newLoopStart < this.state.loopEnd && 0 <= newLoopStart ){
       this.setState({
         loopStart: newLoopStart
       })
       Tone.Transport.loopStart = newLoopStart / this.state.speed;
     }
   }
-  loopEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    var newLoopEnd = Number(e.target.value);
-    if(this.state.loopStart < newLoopEnd){
+  loopEndChange = (value:number) => {
+    console.log(`newloop: ${value}`)
+    var newLoopEnd = value;
+    if(this.state.loopStart < newLoopEnd && newLoopEnd <= this.state.maxDuration){
       this.setState({
         loopEnd: newLoopEnd
       })
@@ -172,7 +162,12 @@ class App extends Component<AppProps, AppState>{
   seek = (position: number) => {
     var transportPosition = position / this.state.speed;
     Tone.Transport.seconds = transportPosition;
-    this.player.restart(Tone.immediate(),transportPosition*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
+    if(this.state.playing){
+      // Tone.Transport.start();
+      // Tone.Transport.pause();
+      // this.player.stop();
+      this.player.restart(Tone.immediate(),transportPosition*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
+    }
     Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
     this.setState({
       progress: position,
@@ -183,13 +178,16 @@ class App extends Component<AppProps, AppState>{
   render(){
 
     return(
-      <div className="App">
+      <div className="App" 
+           onDragStart={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
+           onDrop={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
+      >
         <button onClick={this.playClickHandler}>
           <span>Play/Pause</span>
         </button>
-        <button onClick={this.resetClickHandler}>
+        {/*<button onClick={this.resetClickHandler}>
           <span>Reset to ? seconds</span>
-        </button>
+        </button>*/}
         <label>{this.state.granular ? "granular" : "audio"}</label>
         <input type="checkbox" checked={this.state.granular} onChange={this.playbackChangeHandler} />
         {/*<label>{this.state.volume}</label>
@@ -198,9 +196,6 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="0" max="8" value={this.state.speed} step="0.01" onChange={this.speedChangeHandler} />
         <label>{this.state.semitone}</label>
         <input type="range" min="-12" max="12" value={this.state.semitone} step="1" onChange={this.semitoneChangeHandler} />
-        {/*<label>{this.state.cent}</label>*/}
-        {/*<input type="range" min="-100" max="100" value={this.state.cent} step="1" onChange={this.centChangeHandler} />*/}
-        <span></span>
         {this.player && this.player.buffer ?
           <Waveform audioBuffer={this.player.buffer}
                     progress={this.state.progress}

@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import * as Tone from "tone";
 import "./Waveform.css";
-import filepath from "./dire.mp3";
+import DoubleSlider from "./DoubleSlider";
 
 type WaveformState = {
   hovering: boolean;
@@ -16,8 +16,8 @@ type WaveformProps = {
   onSeek: Function;
   loopStart: number;
   loopEnd: number;
-  loopStartChange: React.ChangeEventHandler<HTMLInputElement>;
-  loopEndChange: React.ChangeEventHandler<HTMLInputElement>;
+  loopStartChange: Function;
+  loopEndChange: Function;
 } 
 
 class Waveform extends Component<WaveformProps, WaveformState>{
@@ -44,6 +44,11 @@ class Waveform extends Component<WaveformProps, WaveformState>{
     if(canvas){
       canvas.addEventListener('wheel', this.handleScroll, {passive: false});
     }
+    window.onresize = ()=>{
+      console.log("resized");
+      this.forceUpdate(); 
+      this.drawBuffer();
+    };
   }
   componentWillUnmount(){
     const canvas = this.waveformCanvasRef.current;
@@ -106,7 +111,6 @@ class Waveform extends Component<WaveformProps, WaveformState>{
           decimal = decimal*10;
         }
         var offset = this.state.windowPosition - windowSize/2;
-        if(windowSize)
         for(var i=0; i <= increments; i++){
           var num = Math.round((offset + step*i + Number.EPSILON) * decimal) / decimal;
           context.fillText(`${num}`, i*(width-30)/increments, 10);
@@ -217,25 +221,65 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       this.props.onSeek(position);
       }
   }
+  //input is normalized 
+  loopStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    var value = Number(e.target.value);
+    var windowSize = this.props.duration/this.state.zoom;
+    var offset = this.state.windowPosition - windowSize/2;
+    this.props.loopStartChange(offset + value*windowSize);
+  }
+  //input is normalized
+  loopEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    var value = Number(e.target.value);
+    var windowSize = this.props.duration/this.state.zoom;
+    var offset = this.state.windowPosition - windowSize/2;
+    this.props.loopEndChange(offset + value*windowSize);
+  }
 
   render(){
     var windowSize = this.props.duration/this.state.zoom;
     var leftWindowPosition = this.state.windowPosition - windowSize/2;
     var rightWindowPosition = this.state.windowPosition + windowSize/2;
+    var leftSliderPosition = this.props.loopStart;
+    var rightSliderPosition = this.props.loopEnd;
+    if(leftSliderPosition < leftWindowPosition){
+      leftSliderPosition = leftWindowPosition;
+    } else if(rightWindowPosition<leftSliderPosition){
+      leftSliderPosition = rightWindowPosition;
+    }
+    if(rightSliderPosition < leftWindowPosition){
+      rightSliderPosition = leftWindowPosition;
+    } else if(rightWindowPosition<rightSliderPosition){
+      rightSliderPosition = rightWindowPosition;
+    }
+    var offset = this.state.windowPosition - windowSize/2;
+    leftSliderPosition = (leftSliderPosition - offset)/windowSize;
+    rightSliderPosition = (rightSliderPosition - offset)/windowSize;
+    const canvas = this.positionCanvasRef.current;
+    this.props.loopStart
+    var canvasWidth = 0;
+    if(canvas){
+      canvasWidth = canvas.width;
+    }
+    
     return(
       <div className="Waveform">
-        <div>
-          <input type="range" min={leftWindowPosition} max={rightWindowPosition} value={this.props.loopStart} step="0.01" onChange={this.props.loopStartChange} />
-          <input type="range" min={leftWindowPosition} max={rightWindowPosition} value={this.props.loopEnd} step="0.01" onChange={this.props.loopEndChange} />
+        <div className="DoubleSliderContainer">
+          <DoubleSlider
+            left={leftSliderPosition}
+            right={rightSliderPosition}
+            leftChange={this.loopStartChange}
+            rightChange={this.loopEndChange}
+          />
         </div>
         <div style={{position: 'relative', height: "200px"}}>
           <canvas onMouseMove={this.waveformHover} onMouseLeave={this.waveformExit} onClick={this.waveformClick} ref={this.waveformCanvasRef}
-          width="1536" height="200" style={{position: 'absolute', left: 0, top: 0, zIndex: 1,}}></canvas>
+           height="200" width={window.innerWidth} style={{zIndex: 1}}></canvas>
           <canvas ref={this.positionCanvasRef}
-          width="1536" height="200" style={{position: 'absolute', left: 0, top: 0, zIndex: 0,}}></canvas>
+           height="200" width={window.innerWidth} style={{zIndex: 0}}></canvas>
         </div>
       </div>
     );
   }
 }
-export default Waveform
+export default Waveform;
