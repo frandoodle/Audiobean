@@ -6,6 +6,7 @@ import filepath from "./dire.mp3";
 
 type AppState = {
   started: boolean;
+  playerNeedsReset: boolean;
   playing: boolean;
   granular: boolean;
   lastTime: number;
@@ -28,7 +29,8 @@ class App extends Component<AppProps, AppState>{
   constructor(props: AppProps) {
     super(props);
     this.state = {
-      started: false, 
+      started: false,
+      playerNeedsReset: false,
       playing: false,
       granular: false,
       lastTime: 0,
@@ -60,7 +62,9 @@ class App extends Component<AppProps, AppState>{
     Tone.Transport.on('loop', () => {
       Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
       Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
-      this.player.restart(Tone.immediate(),Tone.Transport.seconds*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
+      if(this.state.speed !== 1){
+        this.player.restart(Tone.immediate(),this.state.loopStart); //fixes bizarre playbackRate issue in Tonejs
+      }
       this.setState({
         progress: 0,
         lastTime: 0
@@ -82,15 +86,23 @@ class App extends Component<AppProps, AppState>{
       
     }
     if(this.state.playing === false){
-      this.player.restart(Tone.immediate(),Tone.Transport.seconds*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
       Tone.Transport.start();
+      if(this.state.speed !== 1 && this.state.progress < this.state.loopEnd){
+        this.player.mute=true;
+        this.grainPlayer.mute=true;
+        Tone.Transport.scheduleOnce( () => {
+          this.player.restart(Tone.immediate(),this.state.progress);
+          this.grainPlayer.mute=!this.state.granular;
+          this.player.mute=this.state.granular;
+        }, Tone.Transport.seconds+0.01);
+      }
       this.setState({
-        playing: true
+        playing: true,
       })
     }else if(this.state.playing === true){
       Tone.Transport.pause();
       this.setState({
-        playing: false
+        playing: false,
       })
     }
   }
@@ -155,7 +167,7 @@ class App extends Component<AppProps, AppState>{
       var adjustedProgress = this.state.progress + (newProgress - this.state.lastTime)*this.state.speed;
       this.setState({
         progress: adjustedProgress,
-        lastTime: newProgress
+        lastTime: newProgress,
       })
     }
     requestAnimationFrame(this.updateProgress.bind(this));
@@ -164,7 +176,7 @@ class App extends Component<AppProps, AppState>{
     var transportPosition = position / this.state.speed;
     Tone.Transport.seconds = transportPosition;
     if(this.state.playing){
-      this.player.restart(Tone.immediate(),transportPosition*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
+      this.player.restart(Tone.immediate(),position); //fixes bizarre playbackRate issue in Tonejs
     }
     Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
     this.setState({
