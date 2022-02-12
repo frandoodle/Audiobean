@@ -6,7 +6,6 @@ import filepath from "./dire.mp3";
 
 type AppState = {
   started: boolean;
-  playerNeedsReset: boolean;
   playing: boolean;
   granular: boolean;
   lastTime: number;
@@ -30,7 +29,6 @@ class App extends Component<AppProps, AppState>{
     super(props);
     this.state = {
       started: false,
-      playerNeedsReset: false,
       playing: false,
       granular: false,
       lastTime: 0,
