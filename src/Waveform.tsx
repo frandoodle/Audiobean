@@ -61,9 +61,7 @@ class Waveform extends Component<WaveformProps, WaveformState>{
     }
   }
   componentDidUpdate(prevProps: WaveformProps){
-    if(prevProps.progress !== this.props.progress){
-      this.drawPositionCanvas();
-    }
+    this.drawPositionCanvas();
   }
   //utility for avoiding this boilerplate
   getCanvasWidth(): number{
@@ -210,19 +208,19 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       windowPosition: newWindowPosition,
       zoom: newZoom,
 
-    }, () =>{this.drawBuffer(); this.drawPositionCanvas();})
+    }, this.drawBuffer)
   }
   waveformHover = (e: React.MouseEvent<HTMLCanvasElement>) => {
     this.setState({
       hover: e.clientX,
       hovering: true,
-    }, this.drawPositionCanvas)
+    })
   }
   waveformExit = (e: React.MouseEvent<HTMLCanvasElement>) => {    
     this.setState({
       hover: 0,
       hovering: false,
-    }, this.drawPositionCanvas)
+    })
   }
   waveformClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     var normalizedPosition = e.clientX/this.getCanvasWidth();
