@@ -24,6 +24,9 @@ class Waveform extends Component<WaveformProps, WaveformState>{
 
   waveformCanvasRef: React.RefObject<HTMLCanvasElement>;
   positionCanvasRef: React.RefObject<HTMLCanvasElement>;
+  maxZoom: number;
+  zoomScale: number; //higher means slower zooming
+  numberOfTicks: number;
 
   constructor(props: WaveformProps) {
     super(props);
@@ -33,6 +36,9 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       zoom: 1,
       windowPosition: this.props.duration/2,
     }
+    this.maxZoom = 100;
+    this.zoomScale = 50;
+    this.numberOfTicks = 20;
     this.waveformCanvasRef = React.createRef();
     this.positionCanvasRef = React.createRef();
   }
@@ -56,17 +62,20 @@ class Waveform extends Component<WaveformProps, WaveformState>{
   }
   componentDidUpdate(prevProps: WaveformProps){
     if(prevProps.progress !== this.props.progress){
-      if(this.isPositionInWindow(this.props.progress)){
-        this.clear();
-        this.drawPosition(this.props.progress, this.props.duration);
-        if(this.state.hovering){
-          this.drawPosition(this.state.hover);
-        }
-      }
+      this.drawPositionCanvas();
+    }
+  }
+  //utility for avoiding this boilerplate
+  getCanvasWidth(): number{
+    const canvas = this.waveformCanvasRef.current;
+    if(canvas){
+      return canvas.width;
+    }else{
+      return 1;
     }
   }
   //trackValue: a number scaled relative to the track
-  //return: a number clamped and scaled to the current window
+  //return: a number clamped and normalized to the current window
   trackToWindow(trackValue: number): number{
     var windowSize = this.props.duration/this.state.zoom;
     var leftWindowPosition = this.state.windowPosition - windowSize/2;
@@ -78,26 +87,63 @@ class Waveform extends Component<WaveformProps, WaveformState>{
     }
     var offset = this.state.windowPosition - windowSize/2;
     var windowValue = trackValue - offset;
-    return windowValue;
+    return windowValue/windowSize;
   }
+
   //trackValue: a number scaled relative to the track
-  //return: true if visible in the current window false otherwise
+  //return: returns true if visible in the current window false otherwise
   isPositionInWindow(trackValue: number): boolean{
     var windowSize = this.props.duration/this.state.zoom;
     var leftWindowPosition = this.state.windowPosition - windowSize/2;
     var rightWindowPosition = this.state.windowPosition + windowSize/2;
-    var inWindow = leftWindowPosition < trackValue && trackValue < rightWindowPosition;
-    return inWindow;
+    return leftWindowPosition < trackValue && trackValue < rightWindowPosition;
   }
+
+  //normalWindowValue: a normalized number scaled relative to the window
+  //return: a number scaled to the track
+  normalWindowToTrack(normalWindowValue: number): number{
+    var windowSize = this.props.duration/this.state.zoom;
+    var leftWindowPosition = this.state.windowPosition - windowSize/2;
+    var position = normalWindowValue*windowSize + leftWindowPosition;
+    return position;
+  }
+
+  clear(){
+    const canvas = this.positionCanvasRef.current;
+    if(canvas){
+      const ctx = canvas.getContext('2d')
+      if(ctx){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  }
+
+  drawPositionCanvas(){
+    const canvas = this.positionCanvasRef.current;
+    if(canvas){
+      const ctx = canvas.getContext('2d');
+      if(ctx){
+        this.clear();
+        if(this.isPositionInWindow(this.props.progress)){
+          var windowPosition = this.trackToWindow(this.props.progress);
+          ctx.fillRect(windowPosition*canvas.width, 0, 1, canvas.height);
+        }
+        if(this.state.hovering){
+          ctx.fillRect(this.state.hover, 0, 1, canvas.height);
+        }
+      }
+    }
+  }
+
   drawBuffer() {
     const canvas = this.waveformCanvasRef.current;
     if(canvas){
       var width = canvas.width;
       var height = canvas.height;
-      var context = canvas.getContext('2d');
+      var ctx = canvas.getContext('2d');
       var buffer = this.props.audioBuffer;
-      if(context){
-        context.clearRect(0, 0, width, height);
+      if(ctx){
+        ctx.clearRect(0, 0, width, height);
         var dataRaw = buffer.getChannelData( 0 );
         var windowPositionSample = (dataRaw.length/this.props.duration)*this.state.windowPosition;
         var sampleWindowSize = dataRaw.length/this.state.zoom;
@@ -117,11 +163,10 @@ class Waveform extends Component<WaveformProps, WaveformState>{
                   max = datum;
           }
           // void ctx.fillRect(x, y, width, height);
-          context.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
+          ctx.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
         }
-        var increments = 20;
         var windowSize = this.props.duration/this.state.zoom;
-        var step = windowSize/increments;
+        var step = windowSize/this.numberOfTicks;
         var decimal = 1;
         if(step < 2){
           decimal = decimal*10;
@@ -130,141 +175,77 @@ class Waveform extends Component<WaveformProps, WaveformState>{
           decimal = decimal*10;
         }
         var offset = this.state.windowPosition - windowSize/2;
-        for(var i=0; i <= increments; i++){
+        for(var i=0; i <= this.numberOfTicks; i++){
           var num = Math.round((offset + step*i + Number.EPSILON) * decimal) / decimal;
-          context.fillText(`${num}`, i*(width-30)/increments, 10);
+          ctx.fillText(`${num}`, i*(width-30)/this.numberOfTicks, 10);
         }
-      }
-    }
-  }
-  drawPosition(position: number, ratio?: number){
-    const canvas = this.positionCanvasRef.current;
-    if(canvas){
-      var scale = 1;
-      if(ratio){
-        scale = canvas.width / ratio;
-      }
-      var x = (position*scale - canvas.getBoundingClientRect().left);
-      var y = 0;
-      var w = 1;
-      var h = canvas.height;
-      const ctx = canvas.getContext('2d');
-      if(ctx){
-        ctx.fillRect(x, y, w, h);
-      }
-    }
-  }
-  clear(){
-    const canvas = this.positionCanvasRef.current;
-    if(canvas){
-      const ctx = canvas.getContext('2d')
-      if(ctx){
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
   }
   handleScroll = (e: WheelEvent) => {
     e.preventDefault();
-    //check max zoom
-    var zoomScale = 50
-    var newZoom = this.state.zoom - e.deltaY/50;
+    //clamp zoom
+    var newZoom = this.state.zoom - e.deltaY/this.zoomScale;
     if(newZoom < 1) newZoom = 1;
-    if(newZoom > 100) newZoom = 100; 
-    if(newZoom !== this.state.zoom){
-      const canvas = this.positionCanvasRef.current;
-      if(canvas){
-        //get position of zoom in buffer
-        var windowSize = this.props.duration/this.state.zoom;
-        var normalizedScrollPosition = this.state.hover/canvas.width;
-        var scrollPositionInBuffer = (this.state.windowPosition - windowSize/2) + normalizedScrollPosition*windowSize;
-        //get new windowPosition
-        var normalizedDistanceToCenter = 0.5 - normalizedScrollPosition;
-        var newWindowSize = this.props.duration/newZoom;
-        var newWindowPosition = scrollPositionInBuffer + normalizedDistanceToCenter*newWindowSize;
-        //check we have not run out of buffer on either side
-        var leftWindowPosition = newWindowPosition - newWindowSize/2;
-        var rightWindowPosition = newWindowPosition + newWindowSize/2;
-        if(leftWindowPosition < 0){
-          newWindowPosition -= leftWindowPosition; 
-        } else if(this.props.duration < rightWindowPosition){
-          newWindowPosition -= rightWindowPosition - this.props.duration;
-        }
-        this.setState({
-          windowPosition: newWindowPosition,
-          zoom: newZoom,
-
-        }, this.drawBuffer)
-        if(leftWindowPosition > this.props.progress || this.props.progress > rightWindowPosition){
-          this.clear();
-          if(this.state.hovering){
-            this.drawPosition(this.state.hover);
-        }
-      }
-      }
+    if(newZoom > this.maxZoom) newZoom = this.maxZoom; 
+    if(newZoom === this.state.zoom) return;
+    //get position of zoom in buffer
+    var windowSize = this.props.duration/this.state.zoom;
+    var normalizedScrollPosition = this.state.hover/this.getCanvasWidth();
+    var leftWindowPosition = this.state.windowPosition - windowSize/2
+    var scrollPositionInBuffer = leftWindowPosition + normalizedScrollPosition*windowSize;
+    //get new windowPosition
+    var normalizedDistanceToCenter = 0.5 - normalizedScrollPosition;
+    var newWindowSize = this.props.duration/newZoom;
+    var newWindowPosition = scrollPositionInBuffer + normalizedDistanceToCenter*newWindowSize;
+    //check we have not run out of buffer on either side
+    var leftWindowPosition = newWindowPosition - newWindowSize/2;
+    var rightWindowPosition = newWindowPosition + newWindowSize/2;
+    if(leftWindowPosition < 0){
+      newWindowPosition -= leftWindowPosition; 
+    } else if(this.props.duration < rightWindowPosition){
+      newWindowPosition -= rightWindowPosition - this.props.duration;
     }
+    this.setState({
+      windowPosition: newWindowPosition,
+      zoom: newZoom,
+
+    }, () =>{this.drawBuffer(); this.drawPositionCanvas();})
   }
   waveformHover = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    this.clear();
-    this.drawPosition(e.clientX);
-    if(this.isPositionInWindow(this.props.progress)){
-      this.drawPosition(this.props.progress, this.props.duration);
-    }
     this.setState({
       hover: e.clientX,
       hovering: true,
-    })
+    }, this.drawPositionCanvas)
   }
   waveformExit = (e: React.MouseEvent<HTMLCanvasElement>) => {    
-    this.clear();
-    if(this.isPositionInWindow(this.props.progress)){
-      this.drawPosition(this.props.progress, this.props.duration);
-    }
     this.setState({
       hover: 0,
-      hovering: true,
-    })
+      hovering: false,
+    }, this.drawPositionCanvas)
   }
   waveformClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = this.positionCanvasRef.current;
-    if(canvas){
-      var normalizedPosition = e.clientX/canvas.width;
-      var windowSize = this.props.duration/this.state.zoom;
-      var leftWindowPosition = this.state.windowPosition - windowSize/2;
-      var position = normalizedPosition*windowSize + leftWindowPosition;
-      this.props.onSeek(position);
-      }
+    var normalizedPosition = e.clientX/this.getCanvasWidth();
+    this.props.onSeek(this.normalWindowToTrack(normalizedPosition));
   }
-  //input is normalized 
+  //input is normalized window value
   loopStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    var value = Number(e.target.value);
-    var windowSize = this.props.duration/this.state.zoom;
-    var offset = this.state.windowPosition - windowSize/2;
-    this.props.loopStartChange(offset + value*windowSize);
+    var positionInTransport = this.normalWindowToTrack(Number(e.target.value));
+    this.props.loopStartChange(positionInTransport);
   }
-  //input is normalized
+  //input is normalized window value
   loopEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    var value = Number(e.target.value);
-    var windowSize = this.props.duration/this.state.zoom;
-    var offset = this.state.windowPosition - windowSize/2;
-    this.props.loopEndChange(offset + value*windowSize);
+    var positionInTransport = this.normalWindowToTrack(Number(e.target.value));
+    this.props.loopEndChange(positionInTransport);
   }
 
   render(){
-    var windowSize = this.props.duration/this.state.zoom;
-    var leftSliderPosition = this.trackToWindow(this.props.loopStart)/windowSize;
-    var rightSliderPosition = this.trackToWindow(this.props.loopEnd)/windowSize;
-    const canvas = this.positionCanvasRef.current;
-    var canvasWidth = 0;
-    if(canvas){
-      canvasWidth = canvas.width;
-    }
-    
     return(
       <div className="Waveform">
         <div className="DoubleSliderContainer">
           <DoubleSlider
-            left={leftSliderPosition}
-            right={rightSliderPosition}
+            left={this.trackToWindow(this.props.loopStart)}
+            right={this.trackToWindow(this.props.loopEnd)}
             leftChange={this.loopStartChange}
             rightChange={this.loopEndChange}
           />

@@ -139,7 +139,6 @@ class App extends Component<AppProps, AppState>{
     }
   }
   loopEndChange = (value:number) => {
-    console.log(`newloop: ${value}`)
     var newLoopEnd = value;
     if(this.state.loopStart < newLoopEnd && newLoopEnd <= this.state.maxDuration){
       this.setState({
@@ -149,6 +148,7 @@ class App extends Component<AppProps, AppState>{
     }
   }
   updateProgress() {
+    console.log(`player.duration: ${this.player.buffer.duration}`)
     var newProgress = Tone.Transport.seconds;
     if(newProgress !== this.state.lastTime){
       var adjustedProgress = this.state.progress + (newProgress - this.state.lastTime)*this.state.speed;
@@ -163,9 +163,6 @@ class App extends Component<AppProps, AppState>{
     var transportPosition = position / this.state.speed;
     Tone.Transport.seconds = transportPosition;
     if(this.state.playing){
-      // Tone.Transport.start();
-      // Tone.Transport.pause();
-      // this.player.stop();
       this.player.restart(Tone.immediate(),transportPosition*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
     }
     Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
@@ -185,9 +182,6 @@ class App extends Component<AppProps, AppState>{
         <button onClick={this.playClickHandler}>
           <span>Play/Pause</span>
         </button>
-        {/*<button onClick={this.resetClickHandler}>
-          <span>Reset to ? seconds</span>
-        </button>*/}
         <label>{this.state.granular ? "granular" : "audio"}</label>
         <input type="checkbox" checked={this.state.granular} onChange={this.playbackChangeHandler} />
         {/*<label>{this.state.volume}</label>
@@ -206,10 +200,6 @@ class App extends Component<AppProps, AppState>{
                     loopEnd={this.state.loopEnd}
                     loopEndChange={this.loopEndChange}/> :
           <span>"Loading"</span>}
-        {/*<div>{this.player ? this.state.maxDuration: 0}</div>
-        <div>{Tone.Transport.loopEnd}</div>
-        <div>{this.state.progress}</div>
-        <div>{Tone.Transport.seconds}</div>*/}
       </div>
     );
   }

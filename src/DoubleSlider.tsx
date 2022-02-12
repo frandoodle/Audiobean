@@ -26,7 +26,7 @@ class DoubleSlider extends Component<DoubleSliderProps, DoubleSliderState>{
             min={0}
             max={1}
             value={this.props.left}
-            step="0.01"
+            step="0.001"
             onChange={this.props.leftChange}
           />
           <input
@@ -34,7 +34,7 @@ class DoubleSlider extends Component<DoubleSliderProps, DoubleSliderState>{
             min={0}
             max={1}
             value={this.props.right}
-            step="0.01"
+            step="0.001"
             onChange={this.props.rightChange}
           />
         </div>
