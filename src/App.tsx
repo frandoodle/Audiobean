@@ -42,30 +42,30 @@ class App extends Component<AppProps, AppState>{
     };
   }
 
-  async componentDidMount(){
-    await Tone.start()
+  componentDidMount(){
+    Tone.start();
     this.player = new Tone.Player(filepath, () => {
       this.pitchShift = new Tone.PitchShift().toDestination();
       this.player.connect(this.pitchShift);
       this.player.sync().start(0);
-      this.setState({maxDuration: this.player.buffer.duration, loopEnd: this.player.buffer.duration})
+      this.setState({maxDuration: this.player.buffer.duration, loopEnd: this.player.buffer.duration});
       Tone.Transport.setLoopPoints(0,this.player.buffer.duration);
-      Tone.Transport.loop = true;
-      Tone.Transport.on('loop', () => {
-        Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
-        Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
-        this.player.restart(Tone.immediate(),Tone.Transport.seconds*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
-        this.setState({
-          progress: 0,
-          lastTime: 0
-        })
-      })
     });
     this.grainPlayer = new Tone.GrainPlayer(filepath, () => {
       this.grainPlayer.sync().start(0);
       this.grainPlayer.mute = true;
       this.grainPlayer.toDestination();
     });
+    Tone.Transport.loop = true;
+    Tone.Transport.on('loop', () => {
+      Tone.Transport.loopEnd = this.state.loopEnd / this.state.speed;
+      Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
+      this.player.restart(Tone.immediate(),Tone.Transport.seconds*this.state.speed); //fixes bizarre playbackRate issue in Tonejs
+      this.setState({
+        progress: 0,
+        lastTime: 0
+      })
+    })
   }
 
   playClickHandler = async (e: React.SyntheticEvent) => {
@@ -110,7 +110,8 @@ class App extends Component<AppProps, AppState>{
     this.player.playbackRate = newSpeed;
     this.grainPlayer.playbackRate = newSpeed;
     this.pitchShift.pitch = -Math.log2(newSpeed)*12 + this.state.semitone; //maintain the original pitch after changing the playback speed.
-    Tone.Transport.loopEnd = Tone.Transport.seconds + (this.state.loopEnd - this.state.progress) / newSpeed;
+    var remainingTime = this.state.loopEnd - this.state.progress;
+    Tone.Transport.loopEnd = Tone.Transport.seconds + remainingTime / newSpeed;
     Tone.Transport.loopStart = this.state.loopStart / this.state.speed;
   }
   semitoneChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +132,7 @@ class App extends Component<AppProps, AppState>{
   }
   loopStartChange = (value:number) => {
     var newLoopStart = value;
-    if(newLoopStart < this.state.loopEnd && 0 <= newLoopStart ){
+    if(0 <= newLoopStart && newLoopStart < this.state.loopEnd){
       this.setState({
         loopStart: newLoopStart
       })
@@ -144,11 +145,11 @@ class App extends Component<AppProps, AppState>{
       this.setState({
         loopEnd: newLoopEnd
       })
-      Tone.Transport.loopEnd = Tone.Transport.seconds + (newLoopEnd - this.state.progress) / this.state.speed;
+      var remainingTime = this.state.loopEnd - this.state.progress;
+      Tone.Transport.loopEnd = Tone.Transport.seconds + remainingTime / this.state.speed;
     }
   }
   updateProgress() {
-    console.log(`player.duration: ${this.player.buffer.duration}`)
     var newProgress = Tone.Transport.seconds;
     if(newProgress !== this.state.lastTime){
       var adjustedProgress = this.state.progress + (newProgress - this.state.lastTime)*this.state.speed;
