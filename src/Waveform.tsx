@@ -45,6 +45,7 @@ class Waveform extends Component<WaveformProps, WaveformState>{
 
   componentDidMount(){
     this.drawBuffer();
+    this.drawPositionCanvas();
     const canvas = this.waveformCanvasRef.current;
     if(canvas){
       canvas.addEventListener('wheel', this.handleScroll, {passive: false});
@@ -122,11 +123,25 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       const ctx = canvas.getContext('2d');
       if(ctx){
         this.clear();
+        ctx.fillStyle = 'rgba(100,100,100,0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if(this.isPositionInWindow(this.props.loopStart)){
+          var loopStartPosition = this.trackToWindow(this.props.loopStart)*canvas.width;
+          ctx.fillStyle = 'rgba(255,255,255,1.0)';
+          ctx.fillRect(0, 0, loopStartPosition, canvas.height);
+        }
+        if(this.isPositionInWindow(this.props.loopEnd)){
+          var loopEndPosition = this.trackToWindow(this.props.loopEnd)*canvas.width;
+          ctx.fillStyle = 'rgba(255,255,255,1.0)';
+          ctx.fillRect(loopEndPosition, 0, canvas.width-loopEndPosition, canvas.height);
+        }
         if(this.isPositionInWindow(this.props.progress)){
           var windowPosition = this.trackToWindow(this.props.progress);
+          ctx.fillStyle = 'rgba(0,0,0,1.0)';
           ctx.fillRect(windowPosition*canvas.width, 0, 1, canvas.height);
         }
         if(this.state.hovering){
+          ctx.fillStyle = 'rgba(0,0,0,0.8)';
           ctx.fillRect(this.state.hover, 0, 1, canvas.height);
         }
       }
@@ -212,7 +227,7 @@ class Waveform extends Component<WaveformProps, WaveformState>{
   }
   waveformHover = (e: React.MouseEvent<HTMLCanvasElement>) => {
     this.setState({
-      hover: e.clientX,
+      hover: e.clientX-10,
       hovering: true,
     })
   }
@@ -223,7 +238,7 @@ class Waveform extends Component<WaveformProps, WaveformState>{
     })
   }
   waveformClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    var normalizedPosition = e.clientX/this.getCanvasWidth();
+    var normalizedPosition = (e.clientX-10)/this.getCanvasWidth();
     this.props.onSeek(this.normalWindowToTrack(normalizedPosition));
   }
   //input is normalized window value
@@ -239,20 +254,18 @@ class Waveform extends Component<WaveformProps, WaveformState>{
 
   render(){
     return(
-      <div className="Waveform">
-        <div className="DoubleSliderContainer">
-          <DoubleSlider
-            left={this.trackToWindow(this.props.loopStart)}
-            right={this.trackToWindow(this.props.loopEnd)}
-            leftChange={this.loopStartChange}
-            rightChange={this.loopEndChange}
-          />
-        </div>
+      <div className="Waveform" style={{width: window.innerWidth-20}}>
+        <DoubleSlider
+          left={this.trackToWindow(this.props.loopStart)}
+          right={this.trackToWindow(this.props.loopEnd)}
+          leftChange={this.loopStartChange}
+          rightChange={this.loopEndChange}
+        />
         <div style={{position: 'relative', height: "200px"}}>
           <canvas onMouseMove={this.waveformHover} onMouseLeave={this.waveformExit} onClick={this.waveformClick} ref={this.waveformCanvasRef}
-           height="200" width={window.innerWidth} style={{zIndex: 1}}></canvas>
+           height="200" width={window.innerWidth-20} style={{zIndex: 1}}></canvas>
           <canvas ref={this.positionCanvasRef}
-           height="200" width={window.innerWidth} style={{zIndex: 0}}></canvas>
+           height="200" width={window.innerWidth-20} style={{zIndex: 0}}></canvas>
         </div>
       </div>
     );

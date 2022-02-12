@@ -191,16 +191,18 @@ class App extends Component<AppProps, AppState>{
         <input type="range" min="0" max="8" value={this.state.speed} step="0.01" onChange={this.speedChangeHandler} />
         <label>{this.state.semitone}</label>
         <input type="range" min="-12" max="12" value={this.state.semitone} step="1" onChange={this.semitoneChangeHandler} />
-        {this.player && this.player.buffer ?
-          <Waveform audioBuffer={this.player.buffer}
-                    progress={this.state.progress}
-                    duration={this.state.maxDuration}
-                    onSeek={this.seek}
-                    loopStart={this.state.loopStart}
-                    loopStartChange={this.loopStartChange}
-                    loopEnd={this.state.loopEnd}
-                    loopEndChange={this.loopEndChange}/> :
-          <span>"Loading"</span>}
+        <div className="waveformContainer">
+          {this.player && this.player.buffer ?
+            <Waveform audioBuffer={this.player.buffer}
+                      progress={this.state.progress}
+                      duration={this.state.maxDuration}
+                      onSeek={this.seek}
+                      loopStart={this.state.loopStart}
+                      loopStartChange={this.loopStartChange}
+                      loopEnd={this.state.loopEnd}
+                      loopEndChange={this.loopEndChange}/> :
+            <span>"Loading"</span>}
+        </div>
       </div>
     );
   }

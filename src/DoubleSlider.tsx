@@ -20,8 +20,8 @@ class DoubleSlider extends Component<DoubleSliderProps, DoubleSliderState>{
   render(){
     return(
       <div  className="DoubleSlider">
-        <div>
           <input
+            className="slider left"
             type="range"
             min={0}
             max={1}
@@ -30,6 +30,7 @@ class DoubleSlider extends Component<DoubleSliderProps, DoubleSliderState>{
             onChange={this.props.leftChange}
           />
           <input
+            className="slider right"
             type="range"
             min={0}
             max={1}
@@ -37,7 +38,6 @@ class DoubleSlider extends Component<DoubleSliderProps, DoubleSliderState>{
             step="0.001"
             onChange={this.props.rightChange}
           />
-        </div>
       </div>
     );
   }
