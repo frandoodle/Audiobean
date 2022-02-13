@@ -2,12 +2,18 @@
 .SingleSlider{
   width: 200px;
 }
+.controlbar{
+  display: flex;
+  align-items: center;
+  padding: 40px 0px;
+  justify-content: space-between;
+  margin: 0px 10px 0px 8px;
+}
 button {
   background-color: #ffffff;
+  padding: 5px;
   outline: none;
-}
-button:hover{
-  background-color: #ccc;
+  border: none;
 }
 img {
   max-width:  50px;

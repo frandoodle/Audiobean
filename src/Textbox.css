@@ -1,0 +1,17 @@
+.Textbox {
+  display: flex;
+  align-items: center;
+  gap:  5px;
+}
+
+.Textbox input {
+  height: 25px;
+  border: 2px solid black;
+}
+
+.Textbox button {
+  height: 25px;
+  color: white;
+  background-color: black;
+  border: none;
+}

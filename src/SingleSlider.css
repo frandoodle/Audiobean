@@ -3,27 +3,24 @@
 	flex-direction: column;
 	align-items: center;
 }
-.SingleSlider input[type="range"]:hover{
-	background-color: #ccc;
-}
 .SingleSlider input[type="range"]{
 	display: block;
 	height: 8px;
 	width: 100%;
 	margin: 0;
-	-webkit-appearance: none;  /* Override default CSS styles */
+	-webkit-appearance: none;
 	appearance: none;
 	border: 2px solid black;
-	background: #ffffff; /* Grey background */
-	outline: none; /* Remove outline */
+	background: #ffffff;
+	outline: none;
 	overflow: hidden;
 }
 .SingleSlider input[type="range"]::-webkit-slider-thumb {
-	-webkit-appearance: none; /* Override default look */
+	-webkit-appearance: none;
 	appearance: none;
-	width: 3px; /* Set a specific slider handle width */
-	height: 100%; /* Slider handle height */
-	background: #000000; /* Green background */
+	width: 3px;
+	height: 100%;
+	background: #000000;
 	box-shadow: -780px 0 0 780px #000000;
 }
 .SingleSlider input[type="number"]{

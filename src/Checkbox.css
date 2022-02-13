@@ -4,16 +4,13 @@
 }
 /* Hide the browser's default checkbox */
 .Checkbox input[type="checkbox"]{
-  /*position: absolute;*/
   opacity: 0;
   cursor: pointer;
   height: 0;
   width: 0;
 }
 
-/* Create a custom checkbox */
 .checkmark {
-  /*position: absolute;*/
   top: 0;
   left: 0;
   height: 8px;
@@ -22,12 +19,6 @@
   background-color: #fff;
 }
 
-/* On mouse-over, add a grey background color */
-.Checkbox:hover input ~ .checkmark {
-  background-color: #ccc;
-}
-
-/* When the checkbox is checked, add a blue background */
 .Checkbox input:checked ~ .checkmark {
   background-color: #000000;
 }

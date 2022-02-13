@@ -4,6 +4,7 @@ import "./App.css";
 import Waveform from "./Waveform"
 import SingleSlider from "./SingleSlider"
 import Checkbox from "./Checkbox"
+import Textbox from "./Textbox"
 import filepath from "./dire.mp3";
 import play from "./play.png";
 import pause from "./pause.png";
@@ -76,7 +77,7 @@ class App extends Component<AppProps, AppState>{
     })
   }
 
-  playClickHandler = async (e?: React.SyntheticEvent) => {
+  playClickHandler = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     if(this.state.started === false){
       await Tone.loaded()
       document.addEventListener('keydown', (e:KeyboardEvent) => {
@@ -194,6 +195,9 @@ class App extends Component<AppProps, AppState>{
       lastTime: transportPosition,
     })
   }
+  onLoad = (url: string) => {
+    console.log(url);
+  }
   render(){
 
     return(
@@ -201,38 +205,45 @@ class App extends Component<AppProps, AppState>{
            onDragStart={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
            onDrop={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
       >
-        <button onClick={this.playClickHandler}>
-          {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
-        </button>
-        <Checkbox
-          name="granular"
-          value={this.state.granular}
-          onChange={this.playbackChangeHandler}
-        />
-        <SingleSlider
-          name="volume"
-          value={this.state.volume}
-          onChange={this.volumeChangeHandler}
-          min={0}
-          max={2}
-          step={0.01}
-        />
-        <SingleSlider
-          name="speed"
-          value={this.state.speed}
-          onChange={this.speedChangeHandler}
-          min={0.25}
-          max={2}
-          step={0.01}
-        />
-        <SingleSlider
-          name="transpose"
-          value={this.state.semitone}
-          onChange={this.semitoneChangeHandler}
-          min={-12}
-          max={12}
-          step={1}
-        />
+        <div className="controlbar">
+          <Textbox
+            placeholder="YouTube url"
+            buttonText="load"
+            handleClick={this.onLoad}
+          />
+          <button onClick={this.playClickHandler}>
+            {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
+          </button>
+          <Checkbox
+            name="granular"
+            value={this.state.granular}
+            onChange={this.playbackChangeHandler}
+          />
+          <SingleSlider
+            name="volume"
+            value={this.state.volume}
+            onChange={this.volumeChangeHandler}
+            min={0}
+            max={2}
+            step={0.01}
+          />
+          <SingleSlider
+            name="speed"
+            value={this.state.speed}
+            onChange={this.speedChangeHandler}
+            min={0.25}
+            max={2}
+            step={0.01}
+          />
+          <SingleSlider
+            name="transpose"
+            value={this.state.semitone}
+            onChange={this.semitoneChangeHandler}
+            min={-12}
+            max={12}
+            step={1}
+          />
+        </div>
         <div className="waveformContainer">
           {this.player && this.player.buffer ?
             <Waveform audioBuffer={this.player.buffer}
