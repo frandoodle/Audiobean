@@ -32,5 +32,10 @@
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.7.2"
+  },
+  "dependencies": {
+    "@types/webaudioapi": "^0.0.27",
+    "core-js": "^3.21.0",
+    "tone": "^14.7.77"
   }
 }

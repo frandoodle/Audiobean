@@ -1,0 +1,57 @@
+.DoubleSlider{
+	position:  relative;
+	pointer-events: none; 
+}
+
+.slider {
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	margin: 0;
+	-webkit-appearance: none;  /* Override default CSS styles */
+	appearance: none;
+	background: #000000; /* Grey background */
+	outline: none; /* Remove outline */
+	overflow: hidden;
+}
+
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+	-webkit-appearance: none; /* Override default look */
+	appearance: none;
+	width: 3px; /* Set a specific slider handle width */
+	height: 10px; /* Slider handle height */
+	background: #000000; /* Green background */
+	cursor: ew-resize; /* Cursor on hover */
+	pointer-events: auto;
+}
+.right{
+	background: transparent;
+}
+.left::-webkit-slider-thumb {
+	box-shadow: -780px 0 0 780px #cfcfcf;
+}
+.right::-webkit-slider-thumb {
+	box-shadow: 780px 0 0 780px #cfcfcf;
+}
+.slider::-moz-slider-thumb {
+	-moz-appearance: none; /* Override default look */
+	appearance: none;
+	width: 3px; /* Set a specific slider handle width */
+	height: 10px; /* Slider handle height */
+	background: #000000; /* Green background */
+	cursor: ew-resize; /* Cursor on hover */
+	pointer-events: auto;
+}
+.right{
+	background: transparent;
+}
+.left::-moz-slider-thumb {
+	box-shadow: -780px 0 0 780px #ffffff;
+}
+.right::-moz-slider-thumb {
+	box-shadow: 780px 0 0 780px #ffffff;
+}
+
+

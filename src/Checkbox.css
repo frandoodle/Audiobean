@@ -1,0 +1,24 @@
+.Checkbox {
+  display: flex;
+  align-items: center;
+}
+/* Hide the browser's default checkbox */
+.Checkbox input[type="checkbox"]{
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  top: 0;
+  left: 0;
+  height: 8px;
+  width: 8px;
+  border: 2px solid black;
+  background-color: #fff;
+}
+
+.Checkbox input:checked ~ .checkmark {
+  background-color: #000000;
+}
