@@ -29,8 +29,8 @@ class Textbox extends Component<TextboxProps, TextboxState>{
   render(){
     return(
       <label className="Textbox">
-          <input type="text" placeholder={`   ${this.props.placeholder}`} onChange={this.onChange} />
-          <button onClick={this.onClick}>
+        <input type="text" placeholder={`   ${this.props.placeholder}`} onChange={this.onChange} />
+        <button onClick={this.onClick}>
           {this.props.buttonText}
         </button>
       </label>

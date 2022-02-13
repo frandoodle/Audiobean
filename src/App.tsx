@@ -205,44 +205,47 @@ class App extends Component<AppProps, AppState>{
            onDragStart={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
            onDrop={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
       >
-        <div className="controlbar">
+        <div className="title">
+          <h1>AudioBean</h1>
           <Textbox
             placeholder="YouTube url"
             buttonText="load"
             handleClick={this.onLoad}
           />
-          <button onClick={this.playClickHandler}>
-            {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
-          </button>
-          <Checkbox
-            name="granular"
-            value={this.state.granular}
-            onChange={this.playbackChangeHandler}
-          />
-          <SingleSlider
-            name="volume"
-            value={this.state.volume}
-            onChange={this.volumeChangeHandler}
-            min={0}
-            max={2}
-            step={0.01}
-          />
-          <SingleSlider
-            name="speed"
-            value={this.state.speed}
-            onChange={this.speedChangeHandler}
-            min={0.25}
-            max={2}
-            step={0.01}
-          />
-          <SingleSlider
-            name="transpose"
-            value={this.state.semitone}
-            onChange={this.semitoneChangeHandler}
-            min={-12}
-            max={12}
-            step={1}
-          />
+        </div>
+        <div className="controlbar">
+            <button onClick={this.playClickHandler}>
+              {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
+            </button>
+            <SingleSlider
+              name="volume"
+              value={this.state.volume}
+              onChange={this.volumeChangeHandler}
+              min={0}
+              max={2}
+              step={0.01}
+            />
+            <SingleSlider
+              name="speed"
+              value={this.state.speed}
+              onChange={this.speedChangeHandler}
+              min={0.25}
+              max={2}
+              step={0.01}
+            />
+            <SingleSlider
+              name="transpose"
+              value={this.state.semitone}
+              onChange={this.semitoneChangeHandler}
+              min={-12}
+              max={12}
+              step={1}
+            />
+            <Checkbox
+              name="granular"
+              value={this.state.granular}
+              onChange={this.playbackChangeHandler}
+            />
         </div>
         <div className="waveformContainer">
           {this.player && this.player.buffer ?

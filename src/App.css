@@ -1,25 +1,54 @@
 
 .SingleSlider{
-  width: 200px;
+  width: 300px;
 }
 .controlbar{
   display: flex;
+    align-items: flex-end;
+    padding: 5px 55px 10px 55px;
+    justify-content: space-between;
+    margin: 0px 8px 0px 8px;
+    border: 2px solid black;
+    border-bottom: none;
+}
+.playControls{
+  display:  flex;
   align-items: center;
-  padding: 40px 0px;
-  justify-content: space-between;
-  margin: 0px 10px 0px 8px;
+  flex-direction: column;
+}
+.playbackControls{
+  display:  flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 5px;
+}
+.title{
+  display:  flex;
+}
+h1 {
+  margin: 10px 10px 0px 10px;
+
 }
 button {
   background-color: #ffffff;
-  padding: 5px;
   outline: none;
   border: none;
+  font-size:  20px;
+  text-align: center; 
+}
+.controlbar button{
+  padding: 5px 0px 0px 0px;
 }
 img {
   max-width:  50px;
 }
 body{
   margin: 0;
+  font-size: 20px;
+}
+input[type="text"]
+{
+    font-size:20px;
 }
 /* Customize the label (the container) */
 .container {

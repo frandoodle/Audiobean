@@ -123,23 +123,22 @@ class Waveform extends Component<WaveformProps, WaveformState>{
       const ctx = canvas.getContext('2d');
       if(ctx){
         this.clear();
-        ctx.fillStyle = 'rgba(100,100,100,0.3)';
+        //fill entire canvas white
+        ctx.fillStyle = 'rgba(255,255,255,1.0)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if(this.isPositionInWindow(this.props.loopStart)){
-          var loopStartPosition = this.trackToWindow(this.props.loopStart)*canvas.width;
-          ctx.fillStyle = 'rgba(255,255,255,1.0)';
-          ctx.fillRect(0, 0, loopStartPosition, canvas.height);
-        }
-        if(this.isPositionInWindow(this.props.loopEnd)){
-          var loopEndPosition = this.trackToWindow(this.props.loopEnd)*canvas.width;
-          ctx.fillStyle = 'rgba(255,255,255,1.0)';
-          ctx.fillRect(loopEndPosition, 0, canvas.width-loopEndPosition, canvas.height);
-        }
+        //fill unlooped regions grey
+        ctx.fillStyle = 'rgba(100,100,100,0.3)';
+        var loopStartPosition = this.trackToWindow(this.props.loopStart)*canvas.width;
+        var loopEndPosition = this.trackToWindow(this.props.loopEnd)*canvas.width;
+        ctx.fillRect(0, 0, loopStartPosition, canvas.height);
+        ctx.fillRect(loopEndPosition, 0, canvas.width-loopEndPosition, canvas.height);
+        //draw track progress line
         if(this.isPositionInWindow(this.props.progress)){
           var windowPosition = this.trackToWindow(this.props.progress);
           ctx.fillStyle = 'rgba(0,0,0,1.0)';
           ctx.fillRect(windowPosition*canvas.width, 0, 1, canvas.height);
         }
+        //draw cursor line on hover
         if(this.state.hovering){
           ctx.fillStyle = 'rgba(0,0,0,0.8)';
           ctx.fillRect(this.state.hover, 0, 1, canvas.height);

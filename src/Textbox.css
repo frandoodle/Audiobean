@@ -1,7 +1,9 @@
 .Textbox {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap:  5px;
+  max-width: 200px;
+  padding-bottom: 5px;
 }
 
 .Textbox input {

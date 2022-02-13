@@ -30,10 +30,10 @@
 	background: transparent;
 }
 .left::-webkit-slider-thumb {
-	box-shadow: -780px 0 0 780px #ffffff;
+	box-shadow: -780px 0 0 780px #cfcfcf;
 }
 .right::-webkit-slider-thumb {
-	box-shadow: 780px 0 0 780px #ffffff;
+	box-shadow: 780px 0 0 780px #cfcfcf;
 }
 .slider::-moz-slider-thumb {
 	-moz-appearance: none; /* Override default look */
