@@ -34,6 +34,7 @@
     "webpack-dev-server": "^4.7.2"
   },
   "dependencies": {
+    "@bishal-9/youtube-to-mp3": "^1.0.0",
     "@types/webaudioapi": "^0.0.27",
     "core-js": "^3.21.0",
     "tone": "^14.7.77"

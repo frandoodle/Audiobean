@@ -1,15 +1,22 @@
-
+.info{
+  font-size: 18px;
+  padding: 10px 0px 0px 10px;
+}
+.instructions, .todo{
+  padding-left: 30px;
+  padding-top: 10px;
+}
 .SingleSlider{
   width: 300px;
 }
 .controlbar{
   display: flex;
-    align-items: flex-end;
-    padding: 5px 55px 10px 55px;
-    justify-content: space-between;
-    margin: 0px 8px 0px 8px;
-    border: 2px solid black;
-    border-bottom: none;
+  align-items: flex-end;
+  padding: 5px 55px 10px 55px;
+  justify-content: space-between;
+  margin: 0px 8px 0px 8px;
+  border: 2px solid black;
+  border-bottom: none;
 }
 .playControls{
   display:  flex;
@@ -48,9 +55,8 @@ body{
 }
 input[type="text"]
 {
-    font-size:20px;
+  font-size:20px;
 }
-/* Customize the label (the container) */
 .container {
   display: block;
   position: relative;

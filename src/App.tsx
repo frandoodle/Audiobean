@@ -9,6 +9,8 @@ import filepath from "./dire.mp3";
 import play from "./play.png";
 import pause from "./pause.png";
 
+
+
 type AppState = {
   started: boolean;
   playing: boolean;
@@ -52,8 +54,8 @@ class App extends Component<AppProps, AppState>{
     Tone.start();
     this.gainNode = new Tone.Gain(this.state.volume).toDestination();
     this.player = new Tone.Player(filepath, () => {
-      this.pitchShift = new Tone.PitchShift();
-      this.player.connect(this.pitchShift).connect(this.gainNode);
+      this.pitchShift = new Tone.PitchShift().connect(this.gainNode);
+      this.player.connect(this.pitchShift);
       this.player.sync().start(0);
       this.setState({maxDuration: this.player.buffer.duration, loopEnd: this.player.buffer.duration});
       Tone.Transport.setLoopPoints(0,this.player.buffer.duration);
@@ -212,6 +214,10 @@ class App extends Component<AppProps, AppState>{
             buttonText="load"
             handleClick={this.onLoad}
           />
+          {/*<input
+            type="file"
+            accept="audio/mp3"
+          />*/}
         </div>
         <div className="controlbar">
             <button onClick={this.playClickHandler}>
@@ -258,6 +264,30 @@ class App extends Component<AppProps, AppState>{
                       loopEnd={this.state.loopEnd}
                       loopEndChange={this.loopEndChange}/> :
             <span>"Loading"</span>}
+        </div>
+        <div className="info">
+          <div className="credit">
+            AudioBean is a work in progress song learning tool created by Jude Sidloski. The demo song is Dire Dire Docks.
+          </div>
+          <br/>
+          <b>Instructions:</b>
+          <div className="instructions">
+            <b>Wait for wafeform to appear before touching controls.</b><br/>
+            <br/>
+            <b>Zoom:</b> Scroll your mouse wheel while your cursor is hovering over the waveform.<br/>
+            <br/>
+            <b>Loop:</b> Adjust the start and end of the loop by dragging the edge of either side of the black bar directly above the waveform.<br/>
+            <br/>
+            <b>Granular:</b> Switches playback method to granular synthesis. Try this setting if the audio is too distorted from detuning.<br/>
+            <br/>
+          </div>
+          <b>Todo:</b>
+          <div className="todo">
+            File upload & youtube to mp3<br/>
+            Mobile <br/>
+            Testing on browsers other than chrome<br/>
+            Loading state/styling<br/>  
+          </div>
         </div>
       </div>
     );

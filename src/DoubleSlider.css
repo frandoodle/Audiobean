@@ -9,6 +9,7 @@
 	position: absolute;
 	margin: 0;
 	-webkit-appearance: none;  /* Override default CSS styles */
+	-moz-appearance:  none;
 	appearance: none;
 	background: #000000; /* Grey background */
 	outline: none; /* Remove outline */
@@ -43,9 +44,6 @@
 	background: #000000; /* Green background */
 	cursor: ew-resize; /* Cursor on hover */
 	pointer-events: auto;
-}
-.right{
-	background: transparent;
 }
 .left::-moz-slider-thumb {
 	box-shadow: -780px 0 0 780px #ffffff;
