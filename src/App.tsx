@@ -2,6 +2,7 @@ import React, {Component} from "react";
 import * as Tone from 'tone'
 import "./App.css";
 import Waveform from "./Waveform"
+import SingleSlider from "./SingleSlider"
 import filepath from "./dire.mp3";
 
 type AppState = {
@@ -24,6 +25,7 @@ class App extends Component<AppProps, AppState>{
   pitchShift: Tone.PitchShift;
   player: Tone.Player;
   grainPlayer: Tone.GrainPlayer;
+  gainNode: Tone.Gain;
 
   constructor(props: AppProps) {
     super(props);
@@ -44,9 +46,10 @@ class App extends Component<AppProps, AppState>{
 
   componentDidMount(){
     Tone.start();
+    this.gainNode = new Tone.Gain(this.state.volume).toDestination();
     this.player = new Tone.Player(filepath, () => {
-      this.pitchShift = new Tone.PitchShift().toDestination();
-      this.player.connect(this.pitchShift);
+      this.pitchShift = new Tone.PitchShift();
+      this.player.connect(this.pitchShift).connect(this.gainNode);
       this.player.sync().start(0);
       this.setState({maxDuration: this.player.buffer.duration, loopEnd: this.player.buffer.duration});
       Tone.Transport.setLoopPoints(0,this.player.buffer.duration);
@@ -54,7 +57,7 @@ class App extends Component<AppProps, AppState>{
     this.grainPlayer = new Tone.GrainPlayer(filepath, () => {
       this.grainPlayer.sync().start(0);
       this.grainPlayer.mute = true;
-      this.grainPlayer.toDestination();
+      this.grainPlayer.connect(this.gainNode);
     });
     Tone.Transport.loop = true;
     Tone.Transport.on('loop', () => {
@@ -105,12 +108,12 @@ class App extends Component<AppProps, AppState>{
     }
   }
 
-  // volumeChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   this.setState({
-  //     volume: Number(e.target.value)
-  //   })
-  //   this.gainNode.gain.value = Number(e.target.value);
-  // }
+  volumeChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      volume: Number(e.target.value)
+    })
+    this.gainNode.gain.value = Number(e.target.value);
+  }
 
   speedChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     var newSpeed = Number(e.target.value);
@@ -197,10 +200,30 @@ class App extends Component<AppProps, AppState>{
         <input type="checkbox" checked={this.state.granular} onChange={this.playbackChangeHandler} />
         {/*<label>{this.state.volume}</label>
         <input type="range" min="0" max="2" value={this.state.volume} step="0.01" onChange={this.volumeChangeHandler} />*/}
-        <label>{this.state.speed}</label>
-        <input type="range" min="0" max="8" value={this.state.speed} step="0.01" onChange={this.speedChangeHandler} />
-        <label>{this.state.semitone}</label>
-        <input type="range" min="-12" max="12" value={this.state.semitone} step="1" onChange={this.semitoneChangeHandler} />
+        <SingleSlider
+          name="volume"
+          value={this.state.volume}
+          onChange={this.volumeChangeHandler}
+          min={0}
+          max={2}
+          step={0.01}
+        />
+        <SingleSlider
+          name="speed"
+          value={this.state.speed}
+          onChange={this.speedChangeHandler}
+          min={0.25}
+          max={2}
+          step={0.01}
+        />
+        <SingleSlider
+          name="transpose"
+          value={this.state.semitone}
+          onChange={this.semitoneChangeHandler}
+          min={-12}
+          max={12}
+          step={1}
+        />
         <div className="waveformContainer">
           {this.player && this.player.buffer ?
             <Waveform audioBuffer={this.player.buffer}

@@ -1,0 +1,46 @@
+.SingleSlider{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.SingleSlider input[type="range"]{
+	display: block;
+	height: 8px;
+	width: 100%;
+	margin: 0;
+	-webkit-appearance: none;  /* Override default CSS styles */
+	appearance: none;
+	border: 2px solid black;
+	background: #ffffff; /* Grey background */
+	outline: none; /* Remove outline */
+	overflow: hidden;
+}
+.SingleSlider input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none; /* Override default look */
+	appearance: none;
+	width: 3px; /* Set a specific slider handle width */
+	height: 100%; /* Slider handle height */
+	background: #000000; /* Green background */
+	box-shadow: -780px 0 0 780px #000000;
+}
+.SingleSlider input[type="number"]{
+  display: inline;
+  border:  none;
+  width: 25px;
+  padding: 0;
+}
+.SingleSlider input[type="number"]:focus{
+  outline: none;
+}
+.boxInput{
+	display: flex;
+	gap: 5px;
+}
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+
+
