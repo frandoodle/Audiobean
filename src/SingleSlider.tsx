@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import * as Tone from "tone";
 import "./SingleSlider.css";
 
 type SingleSliderState = {

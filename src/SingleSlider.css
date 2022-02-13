@@ -3,6 +3,9 @@
 	flex-direction: column;
 	align-items: center;
 }
+.SingleSlider input[type="range"]:hover{
+	background-color: #ccc;
+}
 .SingleSlider input[type="range"]{
 	display: block;
 	height: 8px;

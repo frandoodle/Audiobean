@@ -3,7 +3,10 @@ import * as Tone from 'tone'
 import "./App.css";
 import Waveform from "./Waveform"
 import SingleSlider from "./SingleSlider"
+import Checkbox from "./Checkbox"
 import filepath from "./dire.mp3";
+import play from "./play.png";
+import pause from "./pause.png";
 
 type AppState = {
   started: boolean;
@@ -73,9 +76,15 @@ class App extends Component<AppProps, AppState>{
     })
   }
 
-  playClickHandler = async (e: React.SyntheticEvent) => {
+  playClickHandler = async (e?: React.SyntheticEvent) => {
     if(this.state.started === false){
       await Tone.loaded()
+      document.addEventListener('keydown', (e:KeyboardEvent) => {
+      e.keyCode === 32 && this.playClickHandler();
+      })
+      document.addEventListener('keyup', (e:KeyboardEvent) => {
+        e.keyCode === 32 && e.preventDefault();
+      })
       var ctx = Tone.getContext();
       if(ctx){
         ctx.resume();
@@ -185,7 +194,6 @@ class App extends Component<AppProps, AppState>{
       lastTime: transportPosition,
     })
   }
-
   render(){
 
     return(
@@ -194,12 +202,13 @@ class App extends Component<AppProps, AppState>{
            onDrop={(e:React.MouseEvent<Element>)=>{e.preventDefault()}}
       >
         <button onClick={this.playClickHandler}>
-          <span>Play/Pause</span>
+          {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
         </button>
-        <label>{this.state.granular ? "granular" : "audio"}</label>
-        <input type="checkbox" checked={this.state.granular} onChange={this.playbackChangeHandler} />
-        {/*<label>{this.state.volume}</label>
-        <input type="range" min="0" max="2" value={this.state.volume} step="0.01" onChange={this.volumeChangeHandler} />*/}
+        <Checkbox
+          name="granular"
+          value={this.state.granular}
+          onChange={this.playbackChangeHandler}
+        />
         <SingleSlider
           name="volume"
           value={this.state.volume}
