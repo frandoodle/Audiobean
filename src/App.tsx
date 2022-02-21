@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import * as Tone from 'tone'
+import axios from 'axios';
 import "./App.css";
 import Waveform from "./Waveform"
 import SingleSlider from "./SingleSlider"
@@ -25,6 +26,7 @@ type AppState = {
   speed: number;
   semitone: number;
   url: string;
+  title: string;
 }
 type AppProps = {
 } 
@@ -51,6 +53,7 @@ class App extends Component<AppProps, AppState>{
       speed: 1,
       semitone: 0,
       url:'https://www.youtube.com/watch?v=txaUET-sYr8',
+      title:''
     };
   }
 
@@ -97,6 +100,20 @@ class App extends Component<AppProps, AppState>{
         progress: 0,
         lastTime: 0
       })
+    })
+    axios.get(`http://localhost:3006/title/?url=${this.state.url}`)
+    .then((res)=> {
+      if(res.status === 200){
+        this.setState({
+          title: res.data,
+        })
+      } else if (res.status === 400){
+        this.setState({
+          title: res.data,
+        })
+      }
+    }).catch(err => {
+      console.log(err);
     })
     await Tone.loaded();
     this.setState({
@@ -245,6 +262,7 @@ class App extends Component<AppProps, AppState>{
             buttonText="load"
             handleClick={this.onLoad}
           />
+          <div>{this.state.title}</div>
           {/*<input
             type="file"
             accept="audio/mp3"
