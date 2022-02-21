@@ -12,6 +12,7 @@ import pause from "./pause.png";
 
 
 type AppState = {
+  loaded: boolean;
   started: boolean;
   playing: boolean;
   granular: boolean;
@@ -23,6 +24,7 @@ type AppState = {
   volume: number;
   speed: number;
   semitone: number;
+  url: string;
 }
 type AppProps = {
 } 
@@ -36,6 +38,7 @@ class App extends Component<AppProps, AppState>{
   constructor(props: AppProps) {
     super(props);
     this.state = {
+      loaded: false,
       started: false,
       playing: false,
       granular: false,
@@ -47,20 +50,38 @@ class App extends Component<AppProps, AppState>{
       volume: 1,
       speed: 1,
       semitone: 0,
+      url:'https://www.youtube.com/watch?v=txaUET-sYr8',
     };
   }
 
   componentDidMount(){
     Tone.start();
     this.gainNode = new Tone.Gain(this.state.volume).toDestination();
-    this.player = new Tone.Player(filepath, () => {
-      this.pitchShift = new Tone.PitchShift().connect(this.gainNode);
+    this.pitchShift = new Tone.PitchShift().connect(this.gainNode);
+    this.loadSong();
+  }
+  async loadSong(){
+    Tone.Transport.seconds = 0;
+    if(this.player && this.grainPlayer){
+      this.player.dispose();
+      this.grainPlayer.dispose();
+    }
+    this.setState({
+      playing: false,
+      loaded: false,
+      lastTime: 0,
+      progress: 0,
+      loopStart: 0,
+      speed: 1,
+      semitone: 0,
+    })
+    this.player = new Tone.Player(`http://localhost:3006/?url=${this.state.url}`, () => {
       this.player.connect(this.pitchShift);
       this.player.sync().start(0);
       this.setState({maxDuration: this.player.buffer.duration, loopEnd: this.player.buffer.duration});
       Tone.Transport.setLoopPoints(0,this.player.buffer.duration);
     });
-    this.grainPlayer = new Tone.GrainPlayer(filepath, () => {
+    this.grainPlayer = new Tone.GrainPlayer(`http://localhost:3006/?url=${this.state.url}`, () => {
       this.grainPlayer.sync().start(0);
       this.grainPlayer.mute = true;
       this.grainPlayer.connect(this.gainNode);
@@ -77,6 +98,11 @@ class App extends Component<AppProps, AppState>{
         lastTime: 0
       })
     })
+    await Tone.loaded();
+    this.setState({
+        loaded: true,
+    })
+
   }
 
   playClickHandler = async (e?: React.MouseEvent<HTMLButtonElement>) => {
@@ -198,7 +224,12 @@ class App extends Component<AppProps, AppState>{
     })
   }
   onLoad = (url: string) => {
-    console.log(url);
+    if(url !== this.state.url){
+      console.log(url);
+      this.setState({
+        url: url
+      }, this.loadSong)
+    }
   }
   render(){
 
@@ -219,42 +250,46 @@ class App extends Component<AppProps, AppState>{
             accept="audio/mp3"
           />*/}
         </div>
+        { this.state.loaded ?
         <div className="controlbar">
-            <button onClick={this.playClickHandler}>
-              {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
-            </button>
-            <SingleSlider
-              name="volume"
-              value={this.state.volume}
-              onChange={this.volumeChangeHandler}
-              min={0}
-              max={2}
-              step={0.01}
-            />
-            <SingleSlider
-              name="speed"
-              value={this.state.speed}
-              onChange={this.speedChangeHandler}
-              min={0.25}
-              max={2}
-              step={0.01}
-            />
-            <SingleSlider
-              name="transpose"
-              value={this.state.semitone}
-              onChange={this.semitoneChangeHandler}
-              min={-12}
-              max={12}
-              step={1}
-            />
-            <Checkbox
-              name="granular"
-              value={this.state.granular}
-              onChange={this.playbackChangeHandler}
-            />
+              <button onClick={this.playClickHandler}>
+                {this.state.playing ? <img src={pause} alt="pause"/> : <img src={play} alt="play"/>}
+              </button>
+              <SingleSlider
+                name="volume"
+                value={this.state.volume}
+                onChange={this.volumeChangeHandler}
+                min={0}
+                max={2}
+                step={0.01}
+              />
+              <SingleSlider
+                name="speed"
+                value={this.state.speed}
+                onChange={this.speedChangeHandler}
+                min={0.25}
+                max={2}
+                step={0.01}
+              />
+              <SingleSlider
+                name="transpose"
+                value={this.state.semitone}
+                onChange={this.semitoneChangeHandler}
+                min={-12}
+                max={12}
+                step={1}
+              />
+              <Checkbox
+                name="granular"
+                value={this.state.granular}
+                onChange={this.playbackChangeHandler}
+              />
         </div>
+        :
+        <div className="controlbar"></div>
+        }
+        { this.state.loaded ?
         <div className="waveformContainer">
-          {this.player && this.player.buffer ?
             <Waveform audioBuffer={this.player.buffer}
                       progress={this.state.progress}
                       duration={this.state.maxDuration}
@@ -262,17 +297,21 @@ class App extends Component<AppProps, AppState>{
                       loopStart={this.state.loopStart}
                       loopStartChange={this.loopStartChange}
                       loopEnd={this.state.loopEnd}
-                      loopEndChange={this.loopEndChange}/> :
-            <span>"Loading"</span>}
+                      loopEndChange={this.loopEndChange}/>
         </div>
+        :
+        <div className="waveformContainer">
+        LOADING...
+        </div>
+        }
         <div className="info">
           <div className="credit">
-            AudioBean is a work in progress song learning tool created by Jude Sidloski. The demo song is Dire Dire Docks.
+            AudioBean is a work-in-progress song learning tool created by Jude Sidloski. The demo song is Dire Dire Docks.
           </div>
           <br/>
           <b>Instructions:</b>
           <div className="instructions">
-            <b>Wait for wafeform to appear before touching controls.</b><br/>
+            <b>Wait for waveform to appear before touching controls.</b><br/>
             <br/>
             <b>Zoom:</b> Scroll your mouse wheel while your cursor is hovering over the waveform.<br/>
             <br/>

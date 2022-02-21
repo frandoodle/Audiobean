@@ -10,6 +10,7 @@
   width: 300px;
 }
 .controlbar{
+  height: 60.6px;
   display: flex;
   align-items: flex-end;
   padding: 5px 55px 10px 55px;
@@ -17,6 +18,9 @@
   margin: 0px 8px 0px 8px;
   border: 2px solid black;
   border-bottom: none;
+}
+.waveformContainer {
+  height: 214px;
 }
 .playControls{
   display:  flex;
